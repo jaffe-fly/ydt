@@ -245,27 +245,6 @@ Browse your dataset with keyboard controls:
 ydt viz dataset -i ./dataset
 ```
 
-## 📚 Documentation
-
-Comprehensive documentation available in the [docs](docs/) folder:
-
-| Document | Description |
-|----------|-------------|
-| 📖 [Installation](docs/installation.md) | Detailed installation guide |
-| 🎯 [Usage](docs/usage.md) | Usage examples & tutorials |
-| 📘 [API Reference](docs/api-reference.md) | Complete API documentation |
-| 📦 [Publishing](docs/publishing.md) | Package publishing guide |
-
-## 🛠️ Requirements
-
-- Python >= 3.8
-- OpenCV >= 4.5.0
-- Ultralytics >= 8.0.0
-- SAHI >= 0.11.0
-
-See [pyproject.toml](pyproject.toml) for complete dependencies.
-
-
 ## 📝 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
@@ -277,13 +256,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Albumentations](https://github.com/albumentations-team/albumentations) - Image augmentation
 
 ---
-
-<div align="center">
-
-**Made with ❤️ for the Computer Vision Community**
-
-⭐ **Star us on GitHub — it motivates us a lot!**
-
-[⬆ Back to Top](#-ydt---yolo-dataset-tools)
-
-</div>
