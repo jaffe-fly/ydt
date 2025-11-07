@@ -13,8 +13,6 @@
 
 ---
 
-**Smart • Powerful • Easy to Use**
-
 </div>
 
 ## ✨ Features
