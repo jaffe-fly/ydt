@@ -246,36 +246,6 @@ ydt dataset auto-label -i ./images -m ./yolo11n.pt --format bbox -o ./labeled
 ydt viz dataset -i ./dataset
 ```
 
-## 📚 文档
-
-详细文档位于 [docs](docs/) 文件夹：
-
-| 文档 | 说明 |
-|------|------|
-| 📖 [安装指南](docs/installation.md) | 详细安装说明 |
-| 🎯 [使用教程](docs/usage.md) | 使用示例和教程 |
-| 📘 [API参考](docs/api-reference.md) | 完整API文档 |
-| 📦 [发布指南](docs/publishing.md) | 打包发布步骤 |
-
-## 🛠️ 依赖要求
-
-- Python >= 3.8
-- OpenCV >= 4.5.0
-- Ultralytics >= 8.0.0
-- SAHI >= 0.11.0
-
-完整依赖列表见 [pyproject.toml](pyproject.toml)。
-
-## 🤝 贡献
-
-欢迎贡献！请查看[贡献指南](CONTRIBUTING.md)。
-
-1. Fork 本仓库
-2. 创建特性分支
-3. 提交更改
-4. 推送到分支
-5. 开启 Pull Request
-
 ## 📝 许可证
 
 本项目采用 MIT 许可证 - 详见 [LICENSE](LICENSE) 文件。
@@ -286,19 +256,5 @@ ydt viz dataset -i ./dataset
 - [SAHI](https://github.com/obss/sahi) - 切片辅助超级推理
 - [Albumentations](https://github.com/albumentations-team/albumentations) - 图像增强
 
-## 📮 联系方式
-
-- 📧 邮箱：your.email@example.com
-- 🐛 问题反馈：[GitHub Issues](https://github.com/yourusername/ydt/issues)
-
 ---
 
-<div align="center">
-
-**用 ❤️ 为计算机视觉社区打造**
-
-⭐ **给我们点个Star吧 — 这对我们是很大的鼓励！**
-
-[⬆ 回到顶部](#-ydt---yolo数据集工具)
-
-</div>
