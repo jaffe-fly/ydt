@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "ydt"
+name = "yolodt"
 version = "0.2.0"
 description = "YOLO Dataset Tools - Comprehensive toolkit for YOLO format dataset processing"
 readme = "README.md"
@@ -62,9 +62,9 @@ dev = [
 ydt = "ydt.cli.main:main"
 
 [project.urls]
-Homepage = "https://github.com/yourusername/ydt"
-Repository = "https://github.com/yourusername/ydt"
-Issues = "https://github.com/yourusername/ydt/issues"
+Homepage = "https://github.com/jaffe-fly/ydt"
+Repository = "https://github.com/jaffe-fly/ydt"
+Issues = "https://github.com/jaffe-fly/ydt/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["ydt"]

@@ -65,14 +65,25 @@
 </tr>
 </table>
 
+## 📦 Installation
+
+Install from PyPI:
+
+```bash
+pip install yolodt
+```
+
+Or install from source:
+
+```bash
+git clone https://github.com/yourusername/ydt.git
+cd ydt
+pip install -e .
+```
+
 ## 🚀 Quick Start
 
 ```bash
-# Clone and install
-git clone https://github.com/yourusername/ydt.git
-cd ydt/package
-uv venv && uv pip install -e .
-
 # Try it out!
 ydt image slice -i ./images -o ./output
 ydt image slice -i ./images -o ./output -c 3 -d 2
