@@ -6,6 +6,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.2.5] - 2025-11-10
+
+### Added
+- **Single File Processing Support**
+  - `ydt image slice` now supports single image file input (e.g., `ydt image slice -i image.jpg -o output`)
+  - `ydt image augment` now supports single image file input with automatic label detection
+  - `ydt image crop-coords` now supports single image file input for quick cropping operations
+  - All three commands maintain backward compatibility with directory input
+
+### Fixed
+- **Logging System**
+  - Fixed duplicate log messages in CLI commands
+  - Improved logger hierarchy to prevent handler duplication
+  - Child loggers now properly inherit from parent logger via propagation
+  - Cleaner console output with single log entries
+
+### Changed
+- Updated command-line help messages to reflect single file support
+- Improved error messages for unsupported file formats
+- Enhanced input validation for both file and directory modes
+
+### Technical Details
+- Modified `ydt/image/slice.py` to detect and handle single file input
+- Modified `ydt/image/augment.py` to support single image augmentation
+- Modified `ydt/cli/main.py` to handle single file mode for crop-coords
+- Refactored `ydt/core/logger.py` to prevent duplicate handlers
+- `get_logger()` now returns loggers without auto-adding handlers
+
 
 ## [0.2.0] - 2025-11-07
 

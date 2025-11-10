@@ -29,6 +29,7 @@
 - 🎨 HSV color augmentation
 - 🎬 Video frame extraction
 - 🚀 Multi-threaded video processing
+- ✨ **NEW: Single file processing** (v0.2.5)
 
 </td>
 <td width="50%">
@@ -88,6 +89,11 @@ pip install -e .
 ydt image slice -i ./images -o ./output
 ydt image slice -i ./images -o ./output -c 3 -d 2
 ydt viz dataset -i ./dataset
+
+# NEW in v0.2.5: Single file processing
+ydt image slice -i image.jpg -o ./output -c 2
+ydt image augment -i image.jpg -o ./output -a 45 90
+ydt image crop-coords -i image.jpg -o ./output -c "100,50,600,400"
 ```
 
 ## 💻 Usage
@@ -96,13 +102,26 @@ ydt viz dataset -i ./dataset
 
 ```bash
 # Image processing
+# Slice images (directory or single file)
 ydt image slice -i ./imgs -o ./out -c 3
+ydt image slice -i image.jpg -o ./out -c 2  # NEW: Single file support
 ydt image slice -i ./imgs -o ./out -c 3 -d 2 -r 0.1 --overlap-vertical 0.05
+
+# Resize images
 ydt image resize -i ./images -o ./resized -s 640 800 1024
+ydt image resize -i image.jpg -o ./resized -s 640  # Single file support
+
+# Augment images (directory or single file)
 ydt image augment -i data.yaml -o ./aug
+ydt image augment -i image.jpg -o ./aug -a 45 90  # NEW: Single file support
+
+# Extract video frames
 ydt image video -i ./videos -o ./frames -s 30
 ydt image video -i ./videos -o ./frames --parallel -w 4
+
+# Crop by coordinates (directory or single file)
 ydt image crop-coords -i ./images -o ./cropped -c "100,50,600,400"
+ydt image crop-coords -i image.jpg -o ./cropped -c "100,50,600,400"  # NEW: Single file support
 
 # Dataset operations
 ydt dataset split -i data.yaml -o ./split -r 0.8
@@ -130,8 +149,9 @@ from ydt.image import (
 from ydt.dataset import split_dataset, DatasetSynthesizer, auto_label_dataset
 from ydt.visual import visualize_dataset, visualize_letterbox
 
-# Slice large images
+# Slice large images (directory or single file)
 slice_dataset("./dataset", "./sliced", horizontal_count=3)
+slice_dataset("image.jpg", "./sliced", horizontal_count=2)  # NEW: Single file support
 
 # Grid slicing (2×3 = 6 slices)
 slice_dataset("./dataset", "./sliced", horizontal_count=2, vertical_count=3)

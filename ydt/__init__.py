@@ -13,7 +13,7 @@ Modules:
     - cli: Command-line interface
 """
 
-__version__ = "0.2.0"
+__version__ = "0.2.5"
 
 # Import main classes and functions for easy access
 from .image import (

@@ -356,7 +356,7 @@ def augment_dataset(
     Batch augment dataset with rotation.
 
     Args:
-        dataset_path: Input dataset directory
+        dataset_path: Input dataset directory or single image file
         output_path: Output directory for augmented dataset
         angles: List of rotation angles (degrees). If None and class_specific_angles is None,
                 uses [45, 90, 135] as default.
@@ -397,15 +397,124 @@ def augment_dataset(
     if test_mode:
         logger.info(f"Test mode: processing only {test_count} images")
 
-    # Determine if using subdirectory structure
-    use_subdir = (dataset_path / 'images' / 'train').exists()
-    subdirs = ['train', 'val'] if use_subdir else ['']
-
     stats = {
         'processed': 0,
         'rotations': 0,
         'skipped': 0,
     }
+
+    # Check if input is a single file or directory
+    if dataset_path.is_file():
+        # Single file mode
+        supported_extensions = ['.jpg', '.jpeg', '.png', '.JPG', '.PNG', '.JPEG']
+        if dataset_path.suffix not in supported_extensions:
+            raise ValueError(f"Unsupported image format: {dataset_path.suffix}")
+
+        logger.info(f"Processing single image file: {dataset_path.name}")
+
+        # Create output directories
+        output_images = output_path
+        output_labels = output_path
+        output_images.mkdir(parents=True, exist_ok=True)
+
+        # Find corresponding label file
+        label_path = dataset_path.with_suffix('.txt')
+        if not label_path.exists():
+            # Try looking in sibling labels directory
+            labels_dir = dataset_path.parent / 'labels'
+            label_path = labels_dir / f"{dataset_path.stem}.txt"
+
+        image_files = [dataset_path]
+        label_files = {dataset_path: label_path if label_path.exists() else None}
+
+        # Process single image
+        for img_path in image_files:
+            label_path = label_files[img_path]
+            if label_path is None or not label_path.exists():
+                logger.warning(f"Label file not found for: {img_path.name}")
+                stats['skipped'] += 1
+                continue
+
+            # Read image and labels
+            img = cv2.imread(str(img_path))
+            if img is None:
+                logger.error(f"Cannot read image: {img_path}")
+                stats['skipped'] += 1
+                continue
+
+            with open(label_path, 'r', encoding='utf-8') as f:
+                label_lines = f.readlines()
+
+            # Preprocess if requested
+            if preprocess:
+                img, label_lines, crop_info = preprocess_image_with_labels(
+                    img, label_lines, format_type=format_type
+                )
+
+            # Save preprocessed original
+            output_img_path = output_images / img_path.name
+            output_label_path = output_labels / f"{img_path.stem}.txt"
+
+            cv2.imwrite(str(output_img_path), img)
+            with open(output_label_path, 'w', encoding='utf-8') as f:
+                f.write('\n'.join(label_lines))
+
+            # Determine rotation angles
+            img_angles = None
+
+            if class_specific_angles:
+                # Check which classes are in this image
+                image_classes = set()
+                for line in label_lines:
+                    if line.strip():
+                        parts = line.strip().split()
+                        if parts:
+                            image_classes.add(int(parts[0]))
+
+                # Find matching class set
+                for class_set, angle_list in class_specific_angles.items():
+                    if image_classes & class_set:  # If any overlap
+                        img_angles = angle_list
+                        logger.debug(f"Using class-specific angles: {img_angles}")
+                        break
+
+            if img_angles is None:
+                img_angles = angles if angles is not None else [45, 90, 135]
+
+            # Perform rotations
+            rotation_success = 0
+            for angle in img_angles:
+                rotated_img, rotated_labels = rotate_image_with_labels(
+                    img, label_lines, angle, format_type=format_type
+                )
+
+                if rotated_img is not None:
+                    # Save rotated image and labels
+                    rot_img_name = f"rot_{int(angle)}_{img_path.name}"
+                    rot_label_name = f"rot_{int(angle)}_{img_path.stem}.txt"
+
+                    rot_img_path = output_images / rot_img_name
+                    rot_label_path = output_labels / rot_label_name
+
+                    cv2.imwrite(str(rot_img_path), rotated_img)
+                    with open(rot_label_path, 'w', encoding='utf-8') as f:
+                        f.write('\n'.join(rotated_labels))
+
+                    rotation_success += 1
+                    stats['rotations'] += 1
+
+            logger.debug(f"Successful rotations: {rotation_success}/{len(img_angles)}")
+            stats['processed'] += 1
+
+        logger.info("Augmentation complete!")
+        logger.info(f"Processed: {stats['processed']}, Rotations: {stats['rotations']}, "
+                    f"Skipped: {stats['skipped']}")
+        return stats
+
+    # Directory mode
+    # Determine if using subdirectory structure
+    use_subdir = (dataset_path / 'images' / 'train').exists()
+    subdirs = ['train', 'val'] if use_subdir else ['']
 
     for subdir in subdirs:
         if subdir:
@@ -428,7 +537,7 @@ def augment_dataset(
 
         # Get all image files
         image_files = []
-        for ext in ['.jpg', '.jpeg', '.png', '.JPG', '.PNG']:
+        for ext in ['.jpg', '.jpeg', '.png', '.JPG', '.PNG', '.JPEG']:
             image_files.extend(list(image_dir.glob(f'*{ext}')))
 
         image_files = sorted(image_files)

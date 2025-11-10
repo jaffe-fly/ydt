@@ -64,8 +64,13 @@ def get_logger(name: str = "ydt") -> logging.Logger:
 
     Returns:
         Logger instance
+
+    Note:
+        This function returns a logger without adding handlers.
+        Handlers should be configured once at the application entry point (e.g., in main.py).
+        Child loggers will inherit handlers from parent loggers through propagation.
     """
     logger = logging.getLogger(name)
-    if not logger.handlers:
-        return setup_logger(name)
+    # Don't auto-setup handlers - let parent logger handle it via propagation
+    # This prevents duplicate log messages
     return logger

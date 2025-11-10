@@ -163,7 +163,7 @@ def slice_dataset(
     Slice images using SAHI and process corresponding label files.
 
     Args:
-        input_dir: Input directory containing images
+        input_dir: Input image file or directory containing images
         output_dir: Output directory
         horizontal_count: Number of horizontal slices
         vertical_count: Number of vertical slices (optional, if None only horizontal slicing)
@@ -181,13 +181,14 @@ def slice_dataset(
         Dictionary with statistics (processed_files, total_slices, etc.)
 
     Raises:
-        FileNotFoundError: If input directory doesn't exist
+        FileNotFoundError: If input path doesn't exist
+        ValueError: If input file is not a supported image format
     """
     input_dir = Path(input_dir)
     output_dir = Path(output_dir)
 
     if not input_dir.exists():
-        raise FileNotFoundError(f"Input directory not found: {input_dir}")
+        raise FileNotFoundError(f"Input path not found: {input_dir}")
 
     if test_mode:
         logger.info(f"Test mode: processing only {test_count} images")
@@ -197,28 +198,42 @@ def slice_dataset(
 
     # Get all image files (including subdirectories)
     image_files = []
-    # First check if there's an images subdirectory
-    images_dir = input_dir / "images"
     has_subfolders = False
 
-    if images_dir.exists():
-        logger.info(f"Found images subdirectory, reading from {images_dir}")
-        search_dir = images_dir
-        has_subfolders = True
+    # Check if input is a single file or directory
+    if input_dir.is_file():
+        # Single file mode
+        supported_extensions = [".jpg", ".jpeg", ".png", ".PNG", ".JPG", ".JPEG"]
+        if input_dir.suffix not in supported_extensions:
+            raise ValueError(f"Unsupported image format: {input_dir.suffix}. Supported formats: {supported_extensions}")
+
+        logger.info(f"Processing single image file: {input_dir.name}")
+        image_files = [input_dir]
+        search_dir = input_dir.parent
+        has_subfolders = False
     else:
-        logger.info(f"No images subdirectory found, reading from {input_dir}")
-        search_dir = input_dir
+        # Directory mode
+        # First check if there's an images subdirectory
+        images_dir = input_dir / "images"
 
-    # Recursively search for all image files
-    for ext in [".jpg", ".jpeg", ".png", ".PNG"]:
-        image_files.extend(list(search_dir.rglob(f"*{ext}")))
+        if images_dir.exists():
+            logger.info(f"Found images subdirectory, reading from {images_dir}")
+            search_dir = images_dir
+            has_subfolders = True
+        else:
+            logger.info(f"No images subdirectory found, reading from {input_dir}")
+            search_dir = input_dir
 
-    # In test mode, only process specified number of images
-    if test_mode:
-        image_files = image_files[:test_count]
+        # Recursively search for all image files
+        for ext in [".jpg", ".jpeg", ".png", ".PNG", ".JPG", ".JPEG"]:
+            image_files.extend(list(search_dir.rglob(f"*{ext}")))
+
+        # In test mode, only process specified number of images
+        if test_mode:
+            image_files = image_files[:test_count]
 
     total_files = len(image_files)
-    logger.info(f"Found {total_files} image files")
+    logger.info(f"Found {total_files} image file(s)")
 
     processed_files = 0
     total_slices = 0

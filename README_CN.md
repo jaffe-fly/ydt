@@ -30,6 +30,7 @@
 - 🎨 HSV颜色增强
 - 🎬 视频切帧
 - 🚀 多线程视频处理
+- ✨ **新增：单文件处理** (v0.2.5)
 
 </td>
 <td width="50%">
@@ -89,6 +90,11 @@ pip install -e .
 ydt image slice -i ./images -o ./output
 ydt image slice -i ./images -o ./output -c 3 -d 2
 ydt viz dataset -i ./dataset
+
+# v0.2.5 新增：单文件处理
+ydt image slice -i image.jpg -o ./output -c 2
+ydt image augment -i image.jpg -o ./output -a 45 90
+ydt image crop-coords -i image.jpg -o ./output -c "100,50,600,400"
 ```
 
 ## 💻 使用方法
@@ -97,14 +103,29 @@ ydt viz dataset -i ./dataset
 
 ```bash
 # 图像处理
+# 切片图像（支持目录或单文件）
 ydt image slice -i ./imgs -o ./out -c 3
+ydt image slice -i image.jpg -o ./out -c 2  # 新增：单文件支持
 ydt image slice -i ./imgs -o ./out -c 3 -d 2 -r 0.1 --overlap-vertical 0.05
+
+# 缩放图像
 ydt image resize -i ./images -o ./resized -s 640 800 1024
+ydt image resize -i image.jpg -o ./resized -s 640  # 单文件支持
+
+# 拼接图像
 ydt image concat img1.jpg img2.jpg -o output.jpg -d horizontal -a center
+
+# 增强图像（支持目录或单文件）
 ydt image augment -i data.yaml -o ./aug
+ydt image augment -i image.jpg -o ./aug -a 45 90  # 新增：单文件支持
+
+# 视频切帧
 ydt image video -i ./videos -o ./frames -s 30
 ydt image video -i ./videos -o ./frames --parallel -w 4
+
+# 坐标裁剪（支持目录或单文件）
 ydt image crop-coords -i ./images -o ./cropped -c "100,50,600,400"
+ydt image crop-coords -i image.jpg -o ./cropped -c "100,50,600,400"  # 新增：单文件支持
 
 # 数据集操作
 ydt dataset split -i data.yaml -o ./split -r 0.8
@@ -132,8 +153,9 @@ from ydt.image import (
 from ydt.dataset import split_dataset, DatasetSynthesizer, auto_label_dataset
 from ydt.visual import visualize_dataset, visualize_letterbox
 
-# 切片大图
+# 切片大图（支持目录或单文件）
 slice_dataset("./dataset", "./sliced", horizontal_count=3)
+slice_dataset("image.jpg", "./sliced", horizontal_count=2)  # 新增：单文件支持
 
 # 网格切片（2×3 = 6块）
 slice_dataset("./dataset", "./sliced", horizontal_count=2, vertical_count=3)

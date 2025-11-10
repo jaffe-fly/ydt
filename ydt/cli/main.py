@@ -8,7 +8,7 @@ import argparse
 import sys
 from pathlib import Path
 
-__version__ = "0.2.0"
+__version__ = "0.2.5"
 
 
 def create_parser():
@@ -31,7 +31,7 @@ def create_parser():
 
     # image slice
     slice_p = img_sub.add_parser("slice", help="Slice large images into tiles")
-    slice_p.add_argument("-i", "--input", required=True, help="Input directory")
+    slice_p.add_argument("-i", "--input", required=True, help="Input image file or directory")
     slice_p.add_argument("-o", "--output", required=True, help="Output directory")
     slice_p.add_argument("-c", "--count", type=int, default=3, help="Number of horizontal slices (default: 3)")
     slice_p.add_argument("-d", "--vertical-count", type=int, help="Number of vertical slices (optional, enables grid slicing)")
@@ -46,7 +46,7 @@ def create_parser():
 
     # image augment
     aug_p = img_sub.add_parser("augment", help="Augment dataset with rotations")
-    aug_p.add_argument("-i", "--input", required=True, help="Input dataset YAML file")
+    aug_p.add_argument("-i", "--input", required=True, help="Input dataset directory or single image file")
     aug_p.add_argument("-o", "--output", required=True, help="Output directory")
     aug_p.add_argument(
         "-a", "--angles", nargs="+", type=int, help="Rotation angles (default: auto)"
@@ -72,7 +72,7 @@ def create_parser():
 
     # image crop-coords
     crop_coords_p = img_sub.add_parser("crop-coords", help="Crop images by coordinates")
-    crop_coords_p.add_argument("-i", "--input", required=True, help="Input images directory")
+    crop_coords_p.add_argument("-i", "--input", required=True, help="Input image file or directory")
     crop_coords_p.add_argument("-o", "--output", required=True, help="Output directory")
     crop_coords_p.add_argument("-c", "--coords", required=True, help="Crop coordinates (x1,y1,x2,y2)")
     crop_coords_p.add_argument("--no-recursive", action="store_true", help="Don't search subdirectories")
@@ -264,6 +264,10 @@ def handle_image_command(args):
         logger.info(f"Successfully extracted {total_frames} frames")
 
     elif args.subcommand == "crop-coords":
+        from ydt.image.resize import crop_image_by_coords
+        from pathlib import Path
+        import cv2
+
         # Parse coordinates string
         try:
             coords = [int(x.strip()) for x in args.coords.split(',')]
@@ -284,17 +288,46 @@ def handle_image_command(args):
             logger.error("Invalid coordinates: x1 must be < x2 and y1 must be < y2")
             return 1
 
-        success_count, failure_count = crop_directory_by_coords(
-            input_dir=args.input,
-            output_dir=args.output,
-            x1=x1,
-            y1=y1,
-            x2=x2,
-            y2=y2,
-            recursive=not args.no_recursive
-        )
+        input_path = Path(args.input)
 
-        logger.info(f"Cropping complete: {success_count} success, {failure_count} failed")
+        # Check if input is a file or directory
+        if input_path.is_file():
+            # Single file mode
+            logger.info(f"Processing single image file: {input_path.name}")
+            output_path = Path(args.output)
+            output_path.mkdir(parents=True, exist_ok=True)
+
+            try:
+                # Read image
+                img = cv2.imread(str(input_path))
+                if img is None:
+                    logger.error(f"Failed to read image: {input_path}")
+                    return 1
+
+                # Crop image
+                cropped = crop_image_by_coords(img, x1, y1, x2, y2)
+
+                # Save cropped image
+                output_file = output_path / input_path.name
+                cv2.imwrite(str(output_file), cropped)
+                logger.info(f"Cropped image saved to: {output_file}")
+
+            except Exception as e:
+                logger.error(f"Error processing image: {e}")
+                return 1
+        else:
+            # Directory mode
+            success_count, failure_count = crop_directory_by_coords(
+                input_dir=args.input,
+                output_dir=args.output,
+                x1=x1,
+                y1=y1,
+                x2=x2,
+                y2=y2,
+                recursive=not args.no_recursive
+            )
+
+            logger.info(f"Cropping complete: {success_count} success, {failure_count} failed")
 
     elif args.subcommand == "resize":
         logger.info(f"Resizing images from {args.input}")
