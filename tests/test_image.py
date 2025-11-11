@@ -146,7 +146,8 @@ class TestImageSlicing:
 
         # Check corresponding label files
         for img_path in sliced_images[:3]:  # Check first few
-            label_path = img_path.with_suffix(".txt")
+            # Convert image path to label path (images -> labels, .jpg -> .txt)
+            label_path = Path(str(img_path).replace("/images/", "/labels/").replace("\\images\\", "\\labels\\")).with_suffix(".txt")
             assert label_path.exists()
 
     def test_slice_dataset_nonexistent_input(self, temp_dir):
