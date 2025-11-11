@@ -249,7 +249,8 @@ class TestDataAugmentation:
 
         # Check corresponding label files
         for img_path in aug_images[:3]:
-            label_path = img_path.with_suffix(".txt")
+            # Convert image path to label path (images -> labels, .jpg -> .txt)
+            label_path = Path(str(img_path).replace("/images/", "/labels/").replace("\\images\\", "\\labels\\")).with_suffix(".txt")
             assert label_path.exists()
 
     def test_augment_dataset_specific_angles(self, sample_dataset, temp_dir):
