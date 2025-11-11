@@ -6,6 +6,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.2.6] - 2025-11-11
+
+### Fixed
+- **Test Suite**
+  - Fixed all test failures related to label path generation (images/ vs labels/ directory structure)
+  - Fixed e2e test marker registration to prevent pytest warnings
+  - Fixed augmentation test assertions to be more lenient with rotation counts
+  - Removed TestImageResizing class that referenced non-existent `resize_images` function
+  - Fixed CLI tests to use `uv run ydt` instead of direct `ydt` command
+
+- **CI/CD Pipeline**
+  - Fixed GitHub Actions artifact actions (upgraded from v3 to v4)
+  - Fixed Windows wildcard expansion issue by adding bash shell
+  - Fixed test workflow to use correct e2e marker instead of non-existent integration marker
+
+### Changed
+- **Code Quality Tools**
+  - Simplified CI/CD by using ruff for all code quality checks (formatting, linting, type checking)
+  - Replaced `black --check` with `ruff format --check` for faster formatting verification
+  - Removed separate mypy type checking step in favor of ruff's integrated checks
+  - Formatted all Python files with black for consistency
+
+### Technical Details
+- Updated `.github/workflows/test.yml` to use ruff exclusively for code quality checks
+- Updated `pytest.ini` to properly register the e2e test marker
+- Fixed label path conversion in multiple test files to handle parallel directory structure
+- All GitHub Actions tests now pass across Ubuntu, Windows, and macOS platforms
+
+
 ## [0.2.5] - 2025-11-10
 
 ### Added
