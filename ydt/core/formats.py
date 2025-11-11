@@ -53,9 +53,7 @@ class OBBFormat:
         return f"{self.class_id} {points_str}"
 
 
-def parse_label_line(
-    line: str, format_type: FormatType = "bbox"
-) -> BBoxFormat | OBBFormat | None:
+def parse_label_line(line: str, format_type: FormatType = "bbox") -> BBoxFormat | OBBFormat | None:
     """
     Parse a label line into appropriate format
 

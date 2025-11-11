@@ -142,9 +142,7 @@ def update_label_classes(
     return stats
 
 
-def generate_class_mapping(
-    old_yaml: str | Path, new_yaml: str | Path
-) -> dict[int, int] | None:
+def generate_class_mapping(old_yaml: str | Path, new_yaml: str | Path) -> dict[int, int] | None:
     """
     Generate class ID mapping from old dataset to new dataset
 
