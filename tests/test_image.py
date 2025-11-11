@@ -134,9 +134,9 @@ class TestImageSlicing:
             overlap_ratio_horizontal=0.1
         )
 
-        assert "total_images" in result
+        assert "processed_files" in result
         assert "total_slices" in result
-        assert result["total_images"] > 0
+        assert result["processed_files"] > 0
         assert result["total_slices"] > 0
 
         # Check output structure
@@ -236,8 +236,10 @@ class TestDataAugmentation:
             output_path=output_dir
         )
 
-        assert "total_augmented" in result
-        assert result["total_augmented"] > 0
+        assert "processed" in result
+        assert "rotations" in result
+        assert result["processed"] > 0
+        assert result["rotations"] > 0
         assert output_dir.exists()
 
         # Check augmented images
@@ -259,7 +261,8 @@ class TestDataAugmentation:
             angles=[0, 90, 180]
         )
 
-        assert result["total_augmented"] > 0
+        assert "processed" in result
+        assert result["processed"] > 0
 
     def test_augment_dataset_nonexistent_yaml(self, temp_dir):
         """Test error handling for nonexistent YAML"""

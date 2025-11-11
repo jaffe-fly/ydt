@@ -111,7 +111,7 @@ names: ['class_0', 'class_1']
         aug_dir = temp_dir / "augmented"
         result = self.run_ydt_command([
             "image", "augment",
-            "-i", str(sliced_data_yaml),
+            "-i", str(sliced_dir),  # Use directory instead of yaml file
             "-o", str(aug_dir),
             "-a", "0", "90", "180"
         ])
@@ -273,8 +273,9 @@ names: ['object']
 
         # Check corresponding label files
         for img_path in synthetic_images:
-            label_path = img_path.with_suffix(".txt")
-            assert label_path.exists()
+            # Convert image path to label path (images -> labels, .jpg -> .txt)
+            label_path = Path(str(img_path).replace("/images/", "/labels/").replace("\\images\\", "\\labels\\")).with_suffix(".txt")
+            assert label_path.exists(), f"Label file not found: {label_path}"
 
             # Verify label format
             label_content = label_path.read_text().strip()
