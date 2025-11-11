@@ -8,8 +8,4 @@ from .core import auto_label_dataset
 from .model_utils import ModelPredictor
 from .structure import DatasetStructure
 
-__all__ = [
-    "auto_label_dataset",
-    "ModelPredictor",
-    "DatasetStructure"
-]
+__all__ = ["auto_label_dataset", "ModelPredictor", "DatasetStructure"]

@@ -135,7 +135,7 @@ def detect_format(label_file: Union[str, Path] = None, label_line: str = None) -
         raise FileNotFoundError(f"Label file not found: {str(label_path)}")
 
     # Read first non-empty line
-    with open(label_path, 'r', encoding='utf-8') as f:
+    with open(label_path, "r", encoding="utf-8") as f:
         for line in f:
             line = line.strip()
             if line:  # Skip empty lines

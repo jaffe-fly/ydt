@@ -15,13 +15,7 @@ class TestCLIInterface:
     def run_cli_command(self, args, cwd=None):
         """Helper to run CLI command"""
         cmd = [sys.executable, "-m", "ydt.cli.main"] + args
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            cwd=cwd,
-            timeout=30
-        )
+        result = subprocess.run(cmd, capture_output=True, text=True, cwd=cwd, timeout=30)
         return result
 
     def test_cli_help(self):
@@ -58,12 +52,18 @@ class TestCLIInterface:
         """Test video extraction from single file"""
         output_dir = temp_dir / "frames"
 
-        result = self.run_cli_command([
-            "image", "video",
-            "-i", str(sample_video),
-            "-o", str(output_dir),
-            "-s", "5"  # Extract every 5th frame
-        ])
+        result = self.run_cli_command(
+            [
+                "image",
+                "video",
+                "-i",
+                str(sample_video),
+                "-o",
+                str(output_dir),
+                "-s",
+                "5",  # Extract every 5th frame
+            ]
+        )
 
         assert result.returncode == 0
         assert output_dir.exists()
@@ -80,14 +80,12 @@ class TestCLIInterface:
 
         # Copy video to directory
         import shutil
+
         shutil.copy(sample_video, video_dir / "video1.mp4")
 
-        result = self.run_cli_command([
-            "image", "video",
-            "-i", str(video_dir),
-            "-o", str(output_dir),
-            "-s", "5"
-        ])
+        result = self.run_cli_command(
+            ["image", "video", "-i", str(video_dir), "-o", str(output_dir), "-s", "5"]
+        )
 
         assert result.returncode == 0
         assert output_dir.exists()
@@ -118,12 +116,18 @@ class TestCLIInterface:
         """Test dataset splitting"""
         output_dir = temp_dir / "split_dataset"
 
-        result = self.run_cli_command([
-            "dataset", "split",
-            "-i", str(sample_dataset / "data.yaml"),
-            "-o", str(output_dir),
-            "-r", "0.8"
-        ])
+        result = self.run_cli_command(
+            [
+                "dataset",
+                "split",
+                "-i",
+                str(sample_dataset / "data.yaml"),
+                "-o",
+                str(output_dir),
+                "-r",
+                "0.8",
+            ]
+        )
 
         assert result.returncode == 0
         assert output_dir.exists()
@@ -158,11 +162,9 @@ class TestCLIInterface:
         """Test error handling for invalid input file"""
         output_dir = temp_dir / "output"
 
-        result = self.run_cli_command([
-            "image", "video",
-            "-i", "nonexistent.mp4",
-            "-o", str(output_dir)
-        ])
+        result = self.run_cli_command(
+            ["image", "video", "-i", "nonexistent.mp4", "-o", str(output_dir)]
+        )
 
         assert result.returncode != 0
         assert "not found" in result.stderr.lower() or "doesn't exist" in result.stderr.lower()
@@ -174,6 +176,7 @@ class TestCLIWithYDTCommand:
     def setup_method(self):
         """Check if ydt command is available"""
         import shutil
+
         self.ydt_available = shutil.which("ydt") is not None
 
     def test_ydt_command_if_available(self):

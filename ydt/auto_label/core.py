@@ -34,10 +34,10 @@ def create_data_yaml(output_dir: Path, class_names: List[str]) -> Path:
         data = {
             "names": {i: name for i, name in enumerate(class_names)},
             "path": str(output_dir.absolute()),
-            "train": "images"
+            "train": "images",
         }
 
-        with open(yaml_path, 'w', encoding='utf-8') as f:
+        with open(yaml_path, "w", encoding="utf-8") as f:
             yaml.dump(data, f, default_flow_style=False, allow_unicode=True)
 
         logger.info(f"已创建data.yaml文件: {yaml_path}")
@@ -77,7 +77,7 @@ def auto_label_dataset(
     device: Union[int, str] = 0,
     conf_threshold: float = 0.25,
     iou_threshold: float = 0.7,
-    dry_run: bool = False
+    dry_run: bool = False,
 ) -> dict:
     """
     自动标注数据集
@@ -150,7 +150,7 @@ def auto_label_dataset(
         raise
 
     # 扫描图片文件
-    image_extensions = {'.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.webp'}
+    image_extensions = {".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".webp"}
     image_files = []
 
     for ext in image_extensions:
@@ -164,11 +164,7 @@ def auto_label_dataset(
 
     if not image_files:
         logger.warning(f"在目录 {input_dir} 中未找到图片文件")
-        return {
-            "success": False,
-            "message": "未找到图片文件",
-            "stats": {}
-        }
+        return {"success": False, "message": "未找到图片文件", "stats": {}}
 
     logger.info(f"找到 {len(image_files)} 张图片")
 
@@ -252,5 +248,5 @@ def auto_label_dataset(
         "output_dir": str(dataset_structure.output_dir) if not dry_run else None,
         "yaml_path": str(yaml_path) if yaml_path else None,
         "stats": stats,
-        "model_info": model_info
+        "model_info": model_info,
     }

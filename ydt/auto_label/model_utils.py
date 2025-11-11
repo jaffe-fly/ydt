@@ -11,6 +11,7 @@ import numpy as np
 
 try:
     from ultralytics import YOLO
+
     ULTRALYTICS_AVAILABLE = True
 except ImportError:
     ULTRALYTICS_AVAILABLE = False
@@ -53,21 +54,21 @@ class ModelPredictor:
         """检测是否为OBB模型"""
         try:
             # 通过模型名称或任务类型判断
-            if hasattr(self.model.model, 'names'):
+            if hasattr(self.model.model, "names"):
                 # 尝试进行一次预测来判断
                 dummy_input = np.zeros((640, 640, 3), dtype=np.uint8)
                 results = self.model(dummy_input, verbose=False)
 
                 if results and len(results) > 0:
                     result = results[0]
-                    if hasattr(result, 'obb') and result.obb is not None:
+                    if hasattr(result, "obb") and result.obb is not None:
                         return True
-                    elif hasattr(result, 'boxes') and result.boxes is not None:
+                    elif hasattr(result, "boxes") and result.boxes is not None:
                         return False
 
             # 通过模型文件名判断
             model_name = self.model_path.name.lower()
-            if 'obb' in model_name:
+            if "obb" in model_name:
                 return True
 
             return False
@@ -75,9 +76,9 @@ class ModelPredictor:
             logger.warning(f"检测模型类型失败，默认使用BBox: {e}")
             return False
 
-    def predict(self, image_path: Union[str, Path],
-                conf_threshold: float = 0.25,
-                iou_threshold: float = 0.7) -> Tuple[List[dict], str]:
+    def predict(
+        self, image_path: Union[str, Path], conf_threshold: float = 0.25, iou_threshold: float = 0.7
+    ) -> Tuple[List[dict], str]:
         """
         对单张图片进行预测
 
@@ -98,10 +99,7 @@ class ModelPredictor:
         try:
             # 进行预测
             results = self.model(
-                str(image_path),
-                conf=conf_threshold,
-                iou=iou_threshold,
-                verbose=False
+                str(image_path), conf=conf_threshold, iou=iou_threshold, verbose=False
             )
 
             if not results:
@@ -110,7 +108,7 @@ class ModelPredictor:
             result = results[0]
             detections = []
 
-            if self.is_obb_model and hasattr(result, 'obb') and result.obb is not None:
+            if self.is_obb_model and hasattr(result, "obb") and result.obb is not None:
                 # OBB格式结果
                 boxes = result.obb
                 if boxes is not None:
@@ -119,11 +117,9 @@ class ModelPredictor:
                         confidence = float(box.conf.item())
                         # OBB坐标: 4个点的x,y坐标
                         coords = box.xyxyxyxyn[0].cpu().numpy().tolist()
-                        detections.append({
-                            "class_id": class_id,
-                            "coordinates": coords,
-                            "confidence": confidence
-                        })
+                        detections.append(
+                            {"class_id": class_id, "coordinates": coords, "confidence": confidence}
+                        )
                 format_type = "obb"
             else:
                 # BBox格式结果
@@ -135,11 +131,9 @@ class ModelPredictor:
                         # BBox坐标: x_center, y_center, width, height (归一化)
                         xywhn = box.xywhn[0].cpu().numpy()
                         coords = xywhn.tolist()
-                        detections.append({
-                            "class_id": class_id,
-                            "coordinates": coords,
-                            "confidence": confidence
-                        })
+                        detections.append(
+                            {"class_id": class_id, "coordinates": coords, "confidence": confidence}
+                        )
                 format_type = "bbox"
 
             return detections, format_type
@@ -150,7 +144,7 @@ class ModelPredictor:
 
     def get_class_names(self) -> List[str]:
         """获取模型类别名称"""
-        if hasattr(self.model.model, 'names'):
+        if hasattr(self.model.model, "names"):
             return list(self.model.model.names.values())
         return []
 
@@ -160,5 +154,5 @@ class ModelPredictor:
             "model_path": str(self.model_path),
             "is_obb": self.is_obb_model,
             "device": self.device,
-            "class_names": self.get_class_names()
+            "class_names": self.get_class_names(),
         }

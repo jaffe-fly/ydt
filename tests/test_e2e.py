@@ -20,13 +20,7 @@ class TestCompleteWorkflows:
     def run_ydt_command(self, args, cwd=None, timeout=60):
         """Helper to run ydt command"""
         cmd = [sys.executable, "-m", "ydt.cli.main"] + args
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            cwd=cwd,
-            timeout=timeout
-        )
+        result = subprocess.run(cmd, capture_output=True, text=True, cwd=cwd, timeout=timeout)
         return result
 
     def setup_test_dataset(self, temp_dir):
@@ -62,14 +56,16 @@ class TestCompleteWorkflows:
 
         # Create data.yaml
         data_yaml = dataset_dir / "data.yaml"
-        data_yaml.write_text("""
+        data_yaml.write_text(
+            """
 path: .
 train: images/train
 val: images/val
 
 nc: 2
 names: ['class_0', 'class_1']
-""")
+"""
+        )
 
         return dataset_dir
 
@@ -81,13 +77,20 @@ names: ['class_0', 'class_1']
 
         # 2. Slice large images
         sliced_dir = temp_dir / "sliced"
-        result = self.run_ydt_command([
-            "image", "slice",
-            "-i", str(dataset_dir),
-            "-o", str(sliced_dir),
-            "-c", "2",
-            "-r", "0.1"
-        ])
+        result = self.run_ydt_command(
+            [
+                "image",
+                "slice",
+                "-i",
+                str(dataset_dir),
+                "-o",
+                str(sliced_dir),
+                "-c",
+                "2",
+                "-r",
+                "0.1",
+            ]
+        )
 
         assert result.returncode == 0
         assert sliced_dir.exists()
@@ -98,23 +101,33 @@ names: ['class_0', 'class_1']
 
         # Create new data.yaml for sliced dataset
         sliced_data_yaml = sliced_dir / "data.yaml"
-        sliced_data_yaml.write_text(f"""
+        sliced_data_yaml.write_text(
+            f"""
 path: {sliced_dir}
 train: images/train
 val: images/val
 
 nc: 2
 names: ['class_0', 'class_1']
-""")
+"""
+        )
 
         # 3. Augment dataset
         aug_dir = temp_dir / "augmented"
-        result = self.run_ydt_command([
-            "image", "augment",
-            "-i", str(sliced_dir),  # Use directory instead of yaml file
-            "-o", str(aug_dir),
-            "-a", "0", "90", "180"
-        ])
+        result = self.run_ydt_command(
+            [
+                "image",
+                "augment",
+                "-i",
+                str(sliced_dir),  # Use directory instead of yaml file
+                "-o",
+                str(aug_dir),
+                "-a",
+                "0",
+                "90",
+                "180",
+            ]
+        )
 
         assert result.returncode == 0
         assert aug_dir.exists()
@@ -126,23 +139,22 @@ names: ['class_0', 'class_1']
 
         # Create data.yaml for augmented dataset
         aug_data_yaml = aug_dir / "data.yaml"
-        aug_data_yaml.write_text(f"""
+        aug_data_yaml.write_text(
+            f"""
 path: {aug_dir}
 train: images/train
 val: images/val
 
 nc: 2
 names: ['class_0', 'class_1']
-""")
+"""
+        )
 
         # 4. Split dataset
         final_dir = temp_dir / "final"
-        result = self.run_ydt_command([
-            "dataset", "split",
-            "-i", str(aug_data_yaml),
-            "-o", str(final_dir),
-            "-r", "0.8"
-        ])
+        result = self.run_ydt_command(
+            ["dataset", "split", "-i", str(aug_data_yaml), "-o", str(final_dir), "-r", "0.8"]
+        )
 
         assert result.returncode == 0
         assert final_dir.exists()
@@ -172,25 +184,32 @@ names: ['class_0', 'class_1']
 
         # Create test video
         video_path = temp_dir / "test_video.mp4"
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        fourcc = cv2.VideoWriter_fourcc(*"mp4v")
         out = cv2.VideoWriter(str(video_path), fourcc, 2.0, (640, 480))
 
         for i in range(20):  # 20 frames
             frame = np.random.randint(100, 200, (480, 640, 3), dtype=np.uint8)
             # Add frame number
-            cv2.putText(frame, f"Frame {i}", (50, 50),
-                       cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+            cv2.putText(
+                frame, f"Frame {i}", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2
+            )
             out.write(frame)
         out.release()
 
         # Extract frames
         frames_dir = temp_dir / "frames"
-        result = self.run_ydt_command([
-            "image", "video",
-            "-i", str(video_path),
-            "-o", str(frames_dir),
-            "-s", "5"  # Extract every 5th frame
-        ])
+        result = self.run_ydt_command(
+            [
+                "image",
+                "video",
+                "-i",
+                str(video_path),
+                "-o",
+                str(frames_dir),
+                "-s",
+                "5",  # Extract every 5th frame
+            ]
+        )
 
         assert result.returncode == 0
         assert frames_dir.exists()
@@ -211,22 +230,22 @@ names: ['class_0', 'class_1']
 
         # Create dataset structure for visualization test
         dataset_yaml = temp_dir / "frames" / "data.yaml"
-        dataset_yaml.write_text("""
+        dataset_yaml.write_text(
+            """
 path: .
 train: .
 val: .
 
 nc: 1
 names: ['object']
-""")
+"""
+        )
 
         # Test visualization (quick check - don't actually open GUI)
         # This would normally open interactive window
-        result = self.run_ydt_command([
-            "viz", "dataset",
-            "-i", str(temp_dir / "frames"),
-            "-f", "0"
-        ], timeout=5)
+        result = self.run_ydt_command(
+            ["viz", "dataset", "-i", str(temp_dir / "frames"), "-f", "0"], timeout=5
+        )
 
         # This might fail due to GUI environment, but at least test the command structure
         # In CI environment, we might need to skip actual GUI tests
@@ -257,13 +276,20 @@ names: ['object']
 
         # Generate synthetic dataset (small number for testing)
         output_dir = temp_dir / "synthetic"
-        result = self.run_ydt_command([
-            "dataset", "synthesize",
-            "-t", str(objects_dir),
-            "-b", str(backgrounds_dir),
-            "-o", str(output_dir),
-            "-n", "5"  # Small number for testing
-        ])
+        result = self.run_ydt_command(
+            [
+                "dataset",
+                "synthesize",
+                "-t",
+                str(objects_dir),
+                "-b",
+                str(backgrounds_dir),
+                "-o",
+                str(output_dir),
+                "-n",
+                "5",  # Small number for testing
+            ]
+        )
 
         assert result.returncode == 0
         assert output_dir.exists()
@@ -275,7 +301,9 @@ names: ['object']
         # Check corresponding label files
         for img_path in synthetic_images:
             # Convert image path to label path (images -> labels, .jpg -> .txt)
-            label_path = Path(str(img_path).replace("/images/", "/labels/").replace("\\images\\", "\\labels\\")).with_suffix(".txt")
+            label_path = Path(
+                str(img_path).replace("/images/", "/labels/").replace("\\images\\", "\\labels\\")
+            ).with_suffix(".txt")
             assert label_path.exists(), f"Label file not found: {label_path}"
 
             # Verify label format

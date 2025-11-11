@@ -97,7 +97,7 @@ class DatasetStructure:
         label_path = self.labels_dir / label_name
 
         try:
-            with open(label_path, 'w', encoding='utf-8') as f:
+            with open(label_path, "w", encoding="utf-8") as f:
                 for detection in detections:
                     class_id = detection["class_id"]
                     coords = detection["coordinates"]
@@ -131,14 +131,16 @@ class DatasetStructure:
         """获取数据集统计信息"""
         try:
             image_count = len(list(self.images_dir.glob("*"))) if self.images_dir.exists() else 0
-            label_count = len(list(self.labels_dir.glob("*.txt"))) if self.labels_dir.exists() else 0
+            label_count = (
+                len(list(self.labels_dir.glob("*.txt"))) if self.labels_dir.exists() else 0
+            )
 
             return {
                 "output_dir": str(self.output_dir),
                 "image_count": image_count,
                 "label_count": label_count,
                 "images_dir": str(self.images_dir),
-                "labels_dir": str(self.labels_dir)
+                "labels_dir": str(self.labels_dir),
             }
 
         except Exception as e:

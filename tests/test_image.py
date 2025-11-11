@@ -19,11 +19,7 @@ class TestVideoExtraction:
         """Test frame extraction from single video"""
         output_dir = temp_dir / "frames"
 
-        count = extract_frames(
-            video_path=sample_video,
-            frames_output_dir=output_dir,
-            step=3
-        )
+        count = extract_frames(video_path=sample_video, frames_output_dir=output_dir, step=3)
 
         assert count > 0
         assert output_dir.exists()
@@ -38,13 +34,10 @@ class TestVideoExtraction:
 
         # Copy video to directory
         import shutil
+
         shutil.copy(sample_video, video_dir / "video1.mp4")
 
-        count = extract_frames(
-            video_path=video_dir,
-            frames_output_dir=output_dir,
-            step=5
-        )
+        count = extract_frames(video_path=video_dir, frames_output_dir=output_dir, step=5)
 
         assert count > 0
         assert output_dir.exists()
@@ -131,7 +124,7 @@ class TestImageSlicing:
             input_dir=sample_dataset,
             output_dir=output_dir,
             horizontal_count=2,
-            overlap_ratio_horizontal=0.1
+            overlap_ratio_horizontal=0.1,
         )
 
         assert "processed_files" in result
@@ -147,22 +140,23 @@ class TestImageSlicing:
         # Check corresponding label files
         for img_path in sliced_images[:3]:  # Check first few
             # Convert image path to label path (images -> labels, .jpg -> .txt)
-            label_path = Path(str(img_path).replace("/images/", "/labels/").replace("\\images\\", "\\labels\\")).with_suffix(".txt")
+            label_path = Path(
+                str(img_path).replace("/images/", "/labels/").replace("\\images\\", "\\labels\\")
+            ).with_suffix(".txt")
             assert label_path.exists()
 
     def test_slice_dataset_nonexistent_input(self, temp_dir):
         """Test error handling for nonexistent input"""
         with pytest.raises(FileNotFoundError):
-            slice_dataset(
-                input_dir="nonexistent",
-                output_dir=temp_dir / "output"
-            )
+            slice_dataset(input_dir="nonexistent", output_dir=temp_dir / "output")
 
 
 class TestImageResizing:
     """Test image resizing functionality"""
 
-    @pytest.mark.skip(reason="resize_images function does not exist, use process_images_multi_method instead")
+    @pytest.mark.skip(
+        reason="resize_images function does not exist, use process_images_multi_method instead"
+    )
     def test_resize_images_scale_method(self, temp_dir):
         """Test image resizing with scale method"""
         # Create test images
@@ -177,10 +171,7 @@ class TestImageResizing:
             cv2.imwrite(str(img_path), image)
 
         count = resize_images(
-            input_dir=images_dir,
-            output_dir=output_dir,
-            target_size=320,
-            method="scale"
+            input_dir=images_dir, output_dir=output_dir, target_size=320, method="scale"
         )
 
         assert count == 3
@@ -196,7 +187,9 @@ class TestImageResizing:
             assert img.shape[0] == 320  # height
             assert img.shape[1] == 320  # width (square)
 
-    @pytest.mark.skip(reason="resize_images function does not exist, use process_images_multi_method instead")
+    @pytest.mark.skip(
+        reason="resize_images function does not exist, use process_images_multi_method instead"
+    )
     def test_resize_images_crop_method(self, temp_dir):
         """Test image resizing with crop method"""
         images_dir = temp_dir / "images"
@@ -209,10 +202,7 @@ class TestImageResizing:
         cv2.imwrite(str(img_path), large_image)
 
         count = resize_images(
-            input_dir=images_dir,
-            output_dir=output_dir,
-            target_size=256,
-            method="crop"
+            input_dir=images_dir, output_dir=output_dir, target_size=256, method="crop"
         )
 
         assert count == 1
@@ -232,10 +222,7 @@ class TestDataAugmentation:
         """Test dataset augmentation with auto-selected angles"""
         output_dir = temp_dir / "augmented"
 
-        result = augment_dataset(
-            dataset_path=sample_dataset,
-            output_path=output_dir
-        )
+        result = augment_dataset(dataset_path=sample_dataset, output_path=output_dir)
 
         assert "processed" in result
         assert "rotations" in result
@@ -250,7 +237,9 @@ class TestDataAugmentation:
         # Check corresponding label files
         for img_path in aug_images[:3]:
             # Convert image path to label path (images -> labels, .jpg -> .txt)
-            label_path = Path(str(img_path).replace("/images/", "/labels/").replace("\\images\\", "\\labels\\")).with_suffix(".txt")
+            label_path = Path(
+                str(img_path).replace("/images/", "/labels/").replace("\\images\\", "\\labels\\")
+            ).with_suffix(".txt")
             assert label_path.exists()
 
     def test_augment_dataset_specific_angles(self, sample_dataset, temp_dir):
@@ -258,9 +247,7 @@ class TestDataAugmentation:
         output_dir = temp_dir / "augmented"
 
         result = augment_dataset(
-            dataset_path=sample_dataset,
-            output_path=output_dir,
-            angles=[0, 90, 180]
+            dataset_path=sample_dataset, output_path=output_dir, angles=[0, 90, 180]
         )
 
         assert "processed" in result
@@ -269,7 +256,4 @@ class TestDataAugmentation:
     def test_augment_dataset_nonexistent_yaml(self, temp_dir):
         """Test error handling for nonexistent YAML"""
         with pytest.raises(FileNotFoundError):
-            augment_dataset(
-                dataset_path="nonexistent.yaml",
-                output_path=temp_dir / "output"
-            )
+            augment_dataset(dataset_path="nonexistent.yaml", output_path=temp_dir / "output")

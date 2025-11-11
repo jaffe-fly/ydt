@@ -33,20 +33,34 @@ def create_parser():
     slice_p = img_sub.add_parser("slice", help="Slice large images into tiles")
     slice_p.add_argument("-i", "--input", required=True, help="Input image file or directory")
     slice_p.add_argument("-o", "--output", required=True, help="Output directory")
-    slice_p.add_argument("-c", "--count", type=int, default=3, help="Number of horizontal slices (default: 3)")
-    slice_p.add_argument("-d", "--vertical-count", type=int, help="Number of vertical slices (optional, enables grid slicing)")
     slice_p.add_argument(
-        "-r", "--overlap", type=float, default=0.1,
-        help="Overlap ratio for horizontal slices (default: 0.1)"
+        "-c", "--count", type=int, default=3, help="Number of horizontal slices (default: 3)"
     )
     slice_p.add_argument(
-        "--overlap-vertical", type=float, default=0.0,
-        help="Overlap ratio for vertical slices (default: 0.0)"
+        "-d",
+        "--vertical-count",
+        type=int,
+        help="Number of vertical slices (optional, enables grid slicing)",
+    )
+    slice_p.add_argument(
+        "-r",
+        "--overlap",
+        type=float,
+        default=0.1,
+        help="Overlap ratio for horizontal slices (default: 0.1)",
+    )
+    slice_p.add_argument(
+        "--overlap-vertical",
+        type=float,
+        default=0.0,
+        help="Overlap ratio for vertical slices (default: 0.0)",
     )
 
     # image augment
     aug_p = img_sub.add_parser("augment", help="Augment dataset with rotations")
-    aug_p.add_argument("-i", "--input", required=True, help="Input dataset directory or single image file")
+    aug_p.add_argument(
+        "-i", "--input", required=True, help="Input dataset directory or single image file"
+    )
     aug_p.add_argument("-o", "--output", required=True, help="Output directory")
     aug_p.add_argument(
         "-a", "--angles", nargs="+", type=int, help="Rotation angles (default: auto)"
@@ -74,16 +88,24 @@ def create_parser():
     crop_coords_p = img_sub.add_parser("crop-coords", help="Crop images by coordinates")
     crop_coords_p.add_argument("-i", "--input", required=True, help="Input image file or directory")
     crop_coords_p.add_argument("-o", "--output", required=True, help="Output directory")
-    crop_coords_p.add_argument("-c", "--coords", required=True, help="Crop coordinates (x1,y1,x2,y2)")
-    crop_coords_p.add_argument("--no-recursive", action="store_true", help="Don't search subdirectories")
+    crop_coords_p.add_argument(
+        "-c", "--coords", required=True, help="Crop coordinates (x1,y1,x2,y2)"
+    )
+    crop_coords_p.add_argument(
+        "--no-recursive", action="store_true", help="Don't search subdirectories"
+    )
 
     # image resize
     resize_p = img_sub.add_parser("resize", help="Resize images using both scale and crop methods")
     resize_p.add_argument("-i", "--input", required=True, help="Input image file or directory")
     resize_p.add_argument("-o", "--output", required=True, help="Output directory")
     resize_p.add_argument(
-        "-s", "--sizes", nargs="+", type=int, required=True,
-        help="Target widths (e.g., -s 640 800 1024)"
+        "-s",
+        "--sizes",
+        nargs="+",
+        type=int,
+        required=True,
+        help="Target widths (e.g., -s 640 800 1024)",
     )
 
     # image concat
@@ -91,12 +113,18 @@ def create_parser():
     concat_p.add_argument("images", nargs=2, help="Two images to concatenate")
     concat_p.add_argument("-o", "--output", required=True, help="Output image path")
     concat_p.add_argument(
-        "-d", "--direction", choices=["horizontal", "vertical"], default="horizontal",
-        help="Concatenation direction (default: horizontal)"
+        "-d",
+        "--direction",
+        choices=["horizontal", "vertical"],
+        default="horizontal",
+        help="Concatenation direction (default: horizontal)",
     )
     concat_p.add_argument(
-        "-a", "--align", choices=["top", "center", "bottom", "left", "right"], default="center",
-        help="Alignment (horizontal: top/center/bottom, vertical: left/center/right)"
+        "-a",
+        "--align",
+        choices=["top", "center", "bottom", "left", "right"],
+        default="center",
+        help="Alignment (horizontal: top/center/bottom, vertical: left/center/right)",
     )
 
     # DATASET COMMANDS
@@ -128,28 +156,41 @@ def create_parser():
         "-n", "--num", type=int, default=1000, help="Number of images (default: 1000)"
     )
     synth_p.add_argument(
-        "--objects-per-image", default="1",
-        help="Objects per background image: single number (2) or range (5-10) (default: 1)"
+        "--objects-per-image",
+        default="1",
+        help="Objects per background image: single number (2) or range (5-10) (default: 1)",
     )
     synth_p.add_argument(
-        "--split", choices=["train", "trainval"], default="trainval",
-        help="Generate train only or train+val split (default: trainval)"
+        "--split",
+        choices=["train", "trainval"],
+        default="trainval",
+        help="Generate train only or train+val split (default: trainval)",
     )
     synth_p.add_argument(
-        "--train-ratio", type=float, default=0.8,
-        help="Train ratio for train/val split (default: 0.8)"
+        "--train-ratio",
+        type=float,
+        default=0.8,
+        help="Train ratio for train/val split (default: 0.8)",
     )
 
     # dataset auto-label
     auto_label_p = ds_sub.add_parser("auto-label", help="Auto-label images using YOLO model")
     auto_label_p.add_argument("-i", "--input", required=True, help="Input images directory")
     auto_label_p.add_argument("-m", "--model", required=True, help="YOLO model path")
-    auto_label_p.add_argument("--format", required=True, choices=["bbox", "obb"], help="Output format (bbox or obb)")
+    auto_label_p.add_argument(
+        "--format", required=True, choices=["bbox", "obb"], help="Output format (bbox or obb)"
+    )
     auto_label_p.add_argument("-o", "--output", help="Output directory (default: auto-generated)")
     auto_label_p.add_argument("-d", "--device", default=0, help="Device ID (default: 0)")
-    auto_label_p.add_argument("--conf-thres", type=float, default=0.25, help="Confidence threshold (default: 0.25)")
-    auto_label_p.add_argument("--iou-thres", type=float, default=0.7, help="IOU threshold (default: 0.7)")
-    auto_label_p.add_argument("--dry-run", action="store_true", help="Preview mode without making changes")
+    auto_label_p.add_argument(
+        "--conf-thres", type=float, default=0.25, help="Confidence threshold (default: 0.25)"
+    )
+    auto_label_p.add_argument(
+        "--iou-thres", type=float, default=0.7, help="IOU threshold (default: 0.7)"
+    )
+    auto_label_p.add_argument(
+        "--dry-run", action="store_true", help="Preview mode without making changes"
+    )
 
     # VISUALIZATION COMMANDS
     viz_parser = subparsers.add_parser("viz", help="Visualization operations")
@@ -217,7 +258,13 @@ def main():
 
 def handle_image_command(args):
     """Handle image processing commands"""
-    from ydt.image import slice_dataset, augment_dataset, extract_frames, extract_frames_parallel, crop_directory_by_coords
+    from ydt.image import (
+        slice_dataset,
+        augment_dataset,
+        extract_frames,
+        extract_frames_parallel,
+        crop_directory_by_coords,
+    )
     from ydt.image.resize import process_images_multi_method
     from ydt.image.concat import concat_images_horizontally, concat_images_vertically
     from ydt.core.logger import get_logger
@@ -227,10 +274,14 @@ def handle_image_command(args):
     if args.subcommand == "slice":
         logger.info(f"Slicing images from {args.input}")
         if args.vertical_count:
-            logger.info(f"Grid slicing: {args.count} horizontal × {args.vertical_count} vertical = {args.count * args.vertical_count} total slices")
+            logger.info(
+                f"Grid slicing: {args.count} horizontal × {args.vertical_count} vertical = {args.count * args.vertical_count} total slices"
+            )
         else:
             logger.info(f"Horizontal slicing: {args.count} slices")
-        logger.info(f"Horizontal overlap: {args.overlap}, Vertical overlap: {args.overlap_vertical}")
+        logger.info(
+            f"Horizontal overlap: {args.overlap}, Vertical overlap: {args.overlap_vertical}"
+        )
 
         slice_dataset(
             args.input,
@@ -238,7 +289,7 @@ def handle_image_command(args):
             horizontal_count=args.count,
             vertical_count=args.vertical_count,
             overlap_ratio_horizontal=args.overlap,
-            overlap_ratio_vertical=args.overlap_vertical
+            overlap_ratio_vertical=args.overlap_vertical,
         )
 
     elif args.subcommand == "augment":
@@ -252,10 +303,7 @@ def handle_image_command(args):
         if args.parallel:
             logger.info("Using parallel processing for multiple videos")
             total_frames = extract_frames_parallel(
-                args.input,
-                args.output,
-                step=args.step,
-                max_workers=args.workers
+                args.input, args.output, step=args.step, max_workers=args.workers
             )
         else:
             logger.info("Using sequential processing")
@@ -270,7 +318,7 @@ def handle_image_command(args):
 
         # Parse coordinates string
         try:
-            coords = [int(x.strip()) for x in args.coords.split(',')]
+            coords = [int(x.strip()) for x in args.coords.split(",")]
             if len(coords) != 4:
                 logger.error("Coordinates must be in format: x1,y1,x2,y2")
                 return 1
@@ -324,7 +372,7 @@ def handle_image_command(args):
                 y1=y1,
                 x2=x2,
                 y2=y2,
-                recursive=not args.no_recursive
+                recursive=not args.no_recursive,
             )
 
             logger.info(f"Cropping complete: {success_count} success, {failure_count} failed")
@@ -335,9 +383,7 @@ def handle_image_command(args):
         logger.info(f"Output directory: {args.output}")
 
         total_processed, total_failed = process_images_multi_method(
-            input_path=args.input,
-            output_dir=args.output,
-            target_sizes=args.sizes
+            input_path=args.input, output_dir=args.output, target_sizes=args.sizes
         )
 
         logger.info(f"Resize complete: {total_processed} images processed, {total_failed} failed")
@@ -397,14 +443,18 @@ def handle_dataset_command(args):
                 min_obj, max_obj = map(int, objects_per_image.split("-"))
                 objects_per_image = (min_obj, max_obj)
             except ValueError:
-                logger.error(f"Invalid objects range format: {objects_per_image}. Use format like '5-10'")
+                logger.error(
+                    f"Invalid objects range format: {objects_per_image}. Use format like '5-10'"
+                )
                 return 1
         else:
             # Single number format: "2"
             try:
                 objects_per_image = int(objects_per_image)
             except ValueError:
-                logger.error(f"Invalid objects number: {objects_per_image}. Use single number or range")
+                logger.error(
+                    f"Invalid objects number: {objects_per_image}. Use single number or range"
+                )
                 return 1
 
         synthesizer = DatasetSynthesizer(
@@ -413,7 +463,7 @@ def handle_dataset_command(args):
             args.output,
             objects_per_image=objects_per_image,
             split_mode=args.split,
-            train_ratio=args.train_ratio
+            train_ratio=args.train_ratio,
         )
         synthesizer.synthesize_dataset(num_images=args.num)
 
@@ -427,7 +477,7 @@ def handle_dataset_command(args):
             device=args.device,
             conf_threshold=args.conf_thres,
             iou_threshold=args.iou_thres,
-            dry_run=args.dry_run
+            dry_run=args.dry_run,
         )
 
         if result["success"]:

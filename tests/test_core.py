@@ -93,7 +93,7 @@ class TestBBoxFormat:
         assert x == 320  # 0.5 * 640
         assert y == 240  # 0.5 * 480
         assert w == 128  # 0.2 * 640
-        assert h == 48   # 0.1 * 480
+        assert h == 48  # 0.1 * 480
 
 
 class TestUtils:

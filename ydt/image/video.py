@@ -134,7 +134,9 @@ def extract_frames(
                         # Handle existing files
                         counter = 1
                         while output_path.exists():
-                            output_path = video_output_dir / f"frame_{frame_count:06d}_{counter}.jpg"
+                            output_path = (
+                                video_output_dir / f"frame_{frame_count:06d}_{counter}.jpg"
+                            )
                             counter += 1
 
                         # Save frame
@@ -208,7 +210,9 @@ def _process_single_video(video_file: Path, frames_output_dir: Path, step: int) 
     duration = total_frames / fps if fps > 0 else 0
 
     thread_logger.info(f"Processing: {video_file.name}")
-    thread_logger.info(f"  Total frames: {total_frames}, FPS: {fps:.2f}, Resolution: {width}x{height}")
+    thread_logger.info(
+        f"  Total frames: {total_frames}, FPS: {fps:.2f}, Resolution: {width}x{height}"
+    )
 
     frame_count = 0
     saved_count = 0
@@ -236,7 +240,9 @@ def _process_single_video(video_file: Path, frames_output_dir: Path, step: int) 
             # Progress update (less frequent for multi-threading)
             if saved_count % 50 == 0:
                 progress = (frame_count / total_frames) * 100
-                thread_logger.info(f"  {video_file.name}: {frame_count}/{total_frames} ({progress:.1f}%), saved: {saved_count}")
+                thread_logger.info(
+                    f"  {video_file.name}: {frame_count}/{total_frames} ({progress:.1f}%), saved: {saved_count}"
+                )
 
         frame_count += 1
 
@@ -323,6 +329,7 @@ def extract_frames_parallel(
 
     # Determine worker count
     import os
+
     if max_workers is None:
         max_workers = min(len(video_files), os.cpu_count() or 4)
 

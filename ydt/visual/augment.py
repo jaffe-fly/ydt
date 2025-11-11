@@ -15,8 +15,7 @@ try:
     from ultralytics.data.augment import RandomHSV
 except ImportError:
     raise ImportError(
-        "ultralytics is required for HSV augmentation. "
-        "Install it with: pip install ultralytics"
+        "ultralytics is required for HSV augmentation. " "Install it with: pip install ultralytics"
     )
 
 try:

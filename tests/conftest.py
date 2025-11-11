@@ -37,15 +37,14 @@ def sample_video(temp_dir):
     """Create a sample test video"""
     video_path = temp_dir / "test_video.mp4"
     # Create a simple test video with 10 frames
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
     out = cv2.VideoWriter(str(video_path), fourcc, 10.0, (640, 480))
 
     for i in range(10):
         # Create a different image for each frame
         frame = np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8)
         # Add frame number text
-        cv2.putText(frame, f"Frame {i}", (50, 50),
-                   cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+        cv2.putText(frame, f"Frame {i}", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
         out.write(frame)
 
     out.release()
@@ -95,14 +94,16 @@ def sample_dataset(temp_dir, sample_image, sample_obb_labels):
 
     # Create data.yaml
     data_yaml = dataset_dir / "data.yaml"
-    data_yaml.write_text("""
+    data_yaml.write_text(
+        """
 path: .
 train: images/train
 val: images/val
 
 nc: 2
 names: ['class_0', 'class_1']
-""")
+"""
+    )
 
     return dataset_dir
 

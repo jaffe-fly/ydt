@@ -82,8 +82,8 @@ def preprocess_image_with_labels(
             # bbox format: class_id + center_x + center_y + width + height
             _, cx, cy, w, h = [float(x) for x in parts]
             # Convert to 4 corner points
-            x1, y1 = cx - w/2, cy - h/2
-            x2, y2 = cx + w/2, cy + h/2
+            x1, y1 = cx - w / 2, cy - h / 2
+            x2, y2 = cx + w / 2, cy + h / 2
             points = np.array([[x1, y1], [x2, y1], [x2, y2], [x1, y2]])
         else:
             logger.warning(f"Invalid label format: {line.strip()}")
@@ -96,7 +96,7 @@ def preprocess_image_with_labels(
 
     if not all_points:
         logger.info("No annotations found, returning original image")
-        return image, label_lines, {'x': 0, 'y': 0, 'width': width, 'height': height}
+        return image, label_lines, {"x": 0, "y": 0, "width": width, "height": height}
 
     # Calculate annotation bounding box
     all_points = np.array(all_points)
@@ -128,7 +128,7 @@ def preprocess_image_with_labels(
             min_x, max_x = new_min_x, new_max_x
 
         cropped_img = image[:, min_x:max_x]
-        crop_info = {'x': min_x, 'y': 0, 'width': max_x - min_x, 'height': height}
+        crop_info = {"x": min_x, "y": 0, "width": max_x - min_x, "height": height}
 
     else:  # Portrait
         crop_height = max_y - min_y
@@ -150,10 +150,12 @@ def preprocess_image_with_labels(
             min_y, max_y = new_min_y, new_max_y
 
         cropped_img = image[min_y:max_y, :]
-        crop_info = {'x': 0, 'y': min_y, 'width': width, 'height': max_y - min_y}
+        crop_info = {"x": 0, "y": min_y, "width": width, "height": max_y - min_y}
 
-    logger.debug(f"Crop region: x:{crop_info['x']}-{crop_info['x']+crop_info['width']}, "
-                 f"y:{crop_info['y']}-{crop_info['y']+crop_info['height']}")
+    logger.debug(
+        f"Crop region: x:{crop_info['x']}-{crop_info['x']+crop_info['width']}, "
+        f"y:{crop_info['y']}-{crop_info['y']+crop_info['height']}"
+    )
 
     # Update labels
     new_lines = []
@@ -182,12 +184,12 @@ def preprocess_image_with_labels(
             points[:, 1] *= height
 
             # Adjust to crop region
-            points[:, 0] -= crop_info['x']
-            points[:, 1] -= crop_info['y']
+            points[:, 0] -= crop_info["x"]
+            points[:, 1] -= crop_info["y"]
 
             # Convert back to relative coordinates
-            points[:, 0] /= crop_info['width']
-            points[:, 1] /= crop_info['height']
+            points[:, 0] /= crop_info["width"]
+            points[:, 1] /= crop_info["height"]
 
             # Format as string
             new_line = class_id
@@ -205,14 +207,14 @@ def preprocess_image_with_labels(
             h *= height
 
             # Adjust to crop region
-            cx -= crop_info['x']
-            cy -= crop_info['y']
+            cx -= crop_info["x"]
+            cy -= crop_info["y"]
 
             # Convert back to relative coordinates
-            cx /= crop_info['width']
-            cy /= crop_info['height']
-            w /= crop_info['width']
-            h /= crop_info['height']
+            cx /= crop_info["width"]
+            cy /= crop_info["height"]
+            w /= crop_info["width"]
+            h /= crop_info["height"]
 
             new_lines.append(f"{class_id} {cx:.6f} {cy:.6f} {w:.6f} {h:.6f}")
 
@@ -292,8 +294,8 @@ def rotate_image_with_labels(
         elif line_format == "bbox" and len(parts) == 5:
             cx, cy, w, h = [float(x) for x in parts[1:]]
             # Convert bbox to 4 corner points
-            x1, y1 = cx - w/2, cy - h/2
-            x2, y2 = cx + w/2, cy + h/2
+            x1, y1 = cx - w / 2, cy - h / 2
+            x2, y2 = cx + w / 2, cy + h / 2
             points = np.array([[x1, y1], [x2, y1], [x2, y2], [x1, y2]])
         else:
             logger.warning(f"Invalid label format: {line.strip()}")
@@ -315,7 +317,9 @@ def rotate_image_with_labels(
 
         # Filter out severely distorted annotations
         if rotated_area < original_area * min_area_ratio:
-            logger.debug(f"Skipping annotation: area ratio {rotated_area/original_area:.2f} < {min_area_ratio}")
+            logger.debug(
+                f"Skipping annotation: area ratio {rotated_area/original_area:.2f} < {min_area_ratio}"
+            )
             continue
 
         # Get minimum area rectangle for OBB
@@ -398,15 +402,15 @@ def augment_dataset(
         logger.info(f"Test mode: processing only {test_count} images")
 
     stats = {
-        'processed': 0,
-        'rotations': 0,
-        'skipped': 0,
+        "processed": 0,
+        "rotations": 0,
+        "skipped": 0,
     }
 
     # Check if input is a single file or directory
     if dataset_path.is_file():
         # Single file mode
-        supported_extensions = ['.jpg', '.jpeg', '.png', '.JPG', '.PNG', '.JPEG']
+        supported_extensions = [".jpg", ".jpeg", ".png", ".JPG", ".PNG", ".JPEG"]
         if dataset_path.suffix not in supported_extensions:
             raise ValueError(f"Unsupported image format: {dataset_path.suffix}")
 
@@ -418,10 +422,10 @@ def augment_dataset(
         output_images.mkdir(parents=True, exist_ok=True)
 
         # Find corresponding label file
-        label_path = dataset_path.with_suffix('.txt')
+        label_path = dataset_path.with_suffix(".txt")
         if not label_path.exists():
             # Try looking in sibling labels directory
-            labels_dir = dataset_path.parent / 'labels'
+            labels_dir = dataset_path.parent / "labels"
             label_path = labels_dir / f"{dataset_path.stem}.txt"
 
         image_files = [dataset_path]
@@ -432,17 +436,17 @@ def augment_dataset(
             label_path = label_files[img_path]
             if label_path is None or not label_path.exists():
                 logger.warning(f"Label file not found for: {img_path.name}")
-                stats['skipped'] += 1
+                stats["skipped"] += 1
                 continue
 
             # Read image and labels
             img = cv2.imread(str(img_path))
             if img is None:
                 logger.error(f"Cannot read image: {img_path}")
-                stats['skipped'] += 1
+                stats["skipped"] += 1
                 continue
 
-            with open(label_path, 'r', encoding='utf-8') as f:
+            with open(label_path, "r", encoding="utf-8") as f:
                 label_lines = f.readlines()
 
             # Preprocess if requested
@@ -456,8 +460,8 @@ def augment_dataset(
             output_label_path = output_labels / f"{img_path.stem}.txt"
 
             cv2.imwrite(str(output_img_path), img)
-            with open(output_label_path, 'w', encoding='utf-8') as f:
-                f.write('\n'.join(label_lines))
+            with open(output_label_path, "w", encoding="utf-8") as f:
+                f.write("\n".join(label_lines))
 
             # Determine rotation angles
             img_angles = None
@@ -497,24 +501,26 @@ def augment_dataset(
                     rot_label_path = output_labels / rot_label_name
 
                     cv2.imwrite(str(rot_img_path), rotated_img)
-                    with open(rot_label_path, 'w', encoding='utf-8') as f:
-                        f.write('\n'.join(rotated_labels))
+                    with open(rot_label_path, "w", encoding="utf-8") as f:
+                        f.write("\n".join(rotated_labels))
 
                     rotation_success += 1
-                    stats['rotations'] += 1
+                    stats["rotations"] += 1
 
             logger.debug(f"Successful rotations: {rotation_success}/{len(img_angles)}")
-            stats['processed'] += 1
+            stats["processed"] += 1
 
         logger.info("Augmentation complete!")
-        logger.info(f"Processed: {stats['processed']}, Rotations: {stats['rotations']}, "
-                    f"Skipped: {stats['skipped']}")
+        logger.info(
+            f"Processed: {stats['processed']}, Rotations: {stats['rotations']}, "
+            f"Skipped: {stats['skipped']}"
+        )
         return stats
 
     # Directory mode
     # Determine if using subdirectory structure
-    use_subdir = (dataset_path / 'images' / 'train').exists()
-    subdirs = ['train', 'val'] if use_subdir else ['']
+    use_subdir = (dataset_path / "images" / "train").exists()
+    subdirs = ["train", "val"] if use_subdir else [""]
 
     for subdir in subdirs:
         if subdir:
@@ -522,23 +528,23 @@ def augment_dataset(
 
         # Setup directories
         if use_subdir:
-            image_dir = dataset_path / 'images' / subdir
-            label_dir = dataset_path / 'labels' / subdir
-            output_images = output_path / 'images' / subdir
-            output_labels = output_path / 'labels' / subdir
+            image_dir = dataset_path / "images" / subdir
+            label_dir = dataset_path / "labels" / subdir
+            output_images = output_path / "images" / subdir
+            output_labels = output_path / "labels" / subdir
         else:
-            image_dir = dataset_path / 'images'
-            label_dir = dataset_path / 'labels'
-            output_images = output_path / 'images'
-            output_labels = output_path / 'labels'
+            image_dir = dataset_path / "images"
+            label_dir = dataset_path / "labels"
+            output_images = output_path / "images"
+            output_labels = output_path / "labels"
 
         output_images.mkdir(parents=True, exist_ok=True)
         output_labels.mkdir(parents=True, exist_ok=True)
 
         # Get all image files
         image_files = []
-        for ext in ['.jpg', '.jpeg', '.png', '.JPG', '.PNG', '.JPEG']:
-            image_files.extend(list(image_dir.glob(f'*{ext}')))
+        for ext in [".jpg", ".jpeg", ".png", ".JPG", ".PNG", ".JPEG"]:
+            image_files.extend(list(image_dir.glob(f"*{ext}")))
 
         image_files = sorted(image_files)
         if test_mode:
@@ -546,21 +552,23 @@ def augment_dataset(
 
         logger.info(f"Found {len(image_files)} images")
 
-        for img_path in tqdm(image_files, desc=f"Processing {subdir}" if subdir else "Processing images"):
+        for img_path in tqdm(
+            image_files, desc=f"Processing {subdir}" if subdir else "Processing images"
+        ):
             label_path = label_dir / f"{img_path.stem}.txt"
             if not label_path.exists():
                 logger.warning(f"Label file not found: {str(label_path)}")
-                stats['skipped'] += 1
+                stats["skipped"] += 1
                 continue
 
             # Read image and labels
             img = cv2.imread(str(img_path))
             if img is None:
                 logger.error(f"Cannot read image: {img_path}")
-                stats['skipped'] += 1
+                stats["skipped"] += 1
                 continue
 
-            with open(label_path, 'r', encoding='utf-8') as f:
+            with open(label_path, "r", encoding="utf-8") as f:
                 label_lines = f.readlines()
 
             # Preprocess if requested
@@ -574,8 +582,8 @@ def augment_dataset(
             output_label_path = output_labels / label_path.name
 
             cv2.imwrite(str(output_img_path), img)
-            with open(output_label_path, 'w', encoding='utf-8') as f:
-                f.write('\n'.join(label_lines))
+            with open(output_label_path, "w", encoding="utf-8") as f:
+                f.write("\n".join(label_lines))
 
             # Determine rotation angles
             img_angles = None
@@ -615,23 +623,27 @@ def augment_dataset(
                     rot_label_path = output_labels / rot_label_name
 
                     cv2.imwrite(str(rot_img_path), rotated_img)
-                    with open(rot_label_path, 'w', encoding='utf-8') as f:
-                        f.write('\n'.join(rotated_labels))
+                    with open(rot_label_path, "w", encoding="utf-8") as f:
+                        f.write("\n".join(rotated_labels))
 
                     rotation_success += 1
-                    stats['rotations'] += 1
+                    stats["rotations"] += 1
 
             logger.debug(f"Successful rotations: {rotation_success}/{len(img_angles)}")
-            stats['processed'] += 1
+            stats["processed"] += 1
 
-            if stats['processed'] % 10 == 0:
-                logger.info(f"Progress: {stats['processed']} images processed, "
-                           f"{stats['rotations']} rotations generated")
+            if stats["processed"] % 10 == 0:
+                logger.info(
+                    f"Progress: {stats['processed']} images processed, "
+                    f"{stats['rotations']} rotations generated"
+                )
 
         logger.info(f"{subdir if subdir else 'Main'} directory complete")
 
     logger.info("Augmentation complete!")
-    logger.info(f"Processed: {stats['processed']}, Rotations: {stats['rotations']}, "
-                f"Skipped: {stats['skipped']}")
+    logger.info(
+        f"Processed: {stats['processed']}, Rotations: {stats['rotations']}, "
+        f"Skipped: {stats['skipped']}"
+    )
 
     return stats

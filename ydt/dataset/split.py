@@ -332,8 +332,7 @@ def merge_datasets(
             if src_train_img_dir.exists():
                 logger.info("Merging training set...")
                 train_images = [
-                    f for f in src_train_img_dir.iterdir()
-                    if f.suffix in image_extensions
+                    f for f in src_train_img_dir.iterdir() if f.suffix in image_extensions
                 ]
 
                 for img_file in train_images:
@@ -379,10 +378,7 @@ def merge_datasets(
 
             if src_val_img_dir.exists():
                 logger.info("Merging validation set...")
-                val_images = [
-                    f for f in src_val_img_dir.iterdir()
-                    if f.suffix in image_extensions
-                ]
+                val_images = [f for f in src_val_img_dir.iterdir() if f.suffix in image_extensions]
 
                 for img_file in val_images:
                     base_name = img_file.stem

@@ -205,7 +205,9 @@ def slice_dataset(
         # Single file mode
         supported_extensions = [".jpg", ".jpeg", ".png", ".PNG", ".JPG", ".JPEG"]
         if input_dir.suffix not in supported_extensions:
-            raise ValueError(f"Unsupported image format: {input_dir.suffix}. Supported formats: {supported_extensions}")
+            raise ValueError(
+                f"Unsupported image format: {input_dir.suffix}. Supported formats: {supported_extensions}"
+            )
 
         logger.info(f"Processing single image file: {input_dir.name}")
         image_files = [input_dir]
@@ -285,7 +287,9 @@ def slice_dataset(
                 )
             else:
                 # Grid slicing (both horizontal and vertical)
-                logger.info(f"Grid slicing: {horizontal_count} × {vertical_count} = {horizontal_count * vertical_count} slices")
+                logger.info(
+                    f"Grid slicing: {horizontal_count} × {vertical_count} = {horizontal_count * vertical_count} slices"
+                )
 
                 # Calculate horizontal slice parameters
                 total_h_overlap = crop_width * overlap_ratio_horizontal * (horizontal_count - 1)
@@ -361,9 +365,13 @@ def slice_dataset(
                     if vertical_count is not None:
                         row = slice_number // horizontal_count
                         col = slice_number % horizontal_count
-                        label_save_path = labels_dir / f"{img_path.stem}_slice_{row:02d}_{col:02d}.txt"
+                        label_save_path = (
+                            labels_dir / f"{img_path.stem}_slice_{row:02d}_{col:02d}.txt"
+                        )
                     else:
-                        label_save_path = labels_dir / f"{img_path.stem}_slice_{slice_number:03d}.txt"
+                        label_save_path = (
+                            labels_dir / f"{img_path.stem}_slice_{slice_number:03d}.txt"
+                        )
 
                     if label_path.exists():
                         # If original label file exists, convert coordinates

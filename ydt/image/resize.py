@@ -221,13 +221,7 @@ def process_images_multi_method(
     return total_processed, total_failed
 
 
-def crop_image_by_coords(
-    image: np.ndarray,
-    x1: int,
-    y1: int,
-    x2: int,
-    y2: int
-) -> np.ndarray:
+def crop_image_by_coords(image: np.ndarray, x1: int, y1: int, x2: int, y2: int) -> np.ndarray:
     """
     Crop image based on specified coordinates.
 
@@ -275,7 +269,7 @@ def crop_directory_by_coords(
     y1: int,
     x2: int,
     y2: int,
-    recursive: bool = True
+    recursive: bool = True,
 ) -> Tuple[int, int]:
     """
     Crop all images in a directory based on specified coordinates.
@@ -305,8 +299,20 @@ def crop_directory_by_coords(
     output_path.mkdir(parents=True, exist_ok=True)
 
     # Supported image formats
-    image_extensions = (".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".webp",
-                      ".JPG", ".JPEG", ".PNG", ".BMP", ".TIFF", ".WEBP")
+    image_extensions = (
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".bmp",
+        ".tiff",
+        ".webp",
+        ".JPG",
+        ".JPEG",
+        ".PNG",
+        ".BMP",
+        ".TIFF",
+        ".WEBP",
+    )
 
     # Get all image files
     if recursive:
@@ -368,7 +374,5 @@ def crop_directory_by_coords(
             logger.error(f"Error processing {image_file}: {e}")
             failure_count += 1
 
-    logger.info(
-        f"Processing complete. Success: {success_count}, Failed: {failure_count}"
-    )
+    logger.info(f"Processing complete. Success: {success_count}, Failed: {failure_count}")
     return success_count, failure_count
