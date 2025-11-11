@@ -7,7 +7,7 @@ Provides easy-to-use commands for YOLO dataset processing.
 import argparse
 import sys
 
-__version__ = "0.2.5"
+__version__ = "0.2.6"
 
 
 def create_parser():

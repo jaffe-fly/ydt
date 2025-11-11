@@ -30,7 +30,6 @@
 - 🎨 HSV颜色增强
 - 🎬 视频切帧
 - 🚀 多线程视频处理
-- ✨ **新增：单文件处理** (v0.2.5)
 
 </td>
 <td width="50%">
@@ -91,7 +90,6 @@ ydt image slice -i ./images -o ./output
 ydt image slice -i ./images -o ./output -c 3 -d 2
 ydt viz dataset -i ./dataset
 
-# v0.2.5 新增：单文件处理
 ydt image slice -i image.jpg -o ./output -c 2
 ydt image augment -i image.jpg -o ./output -a 45 90
 ydt image crop-coords -i image.jpg -o ./output -c "100,50,600,400"

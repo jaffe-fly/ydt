@@ -29,7 +29,6 @@
 - 🎨 HSV color augmentation
 - 🎬 Video frame extraction
 - 🚀 Multi-threaded video processing
-- ✨ **NEW: Single file processing** (v0.2.5)
 
 </td>
 <td width="50%">
@@ -90,7 +89,6 @@ ydt image slice -i ./images -o ./output
 ydt image slice -i ./images -o ./output -c 3 -d 2
 ydt viz dataset -i ./dataset
 
-# NEW in v0.2.5: Single file processing
 ydt image slice -i image.jpg -o ./output -c 2
 ydt image augment -i image.jpg -o ./output -a 45 90
 ydt image crop-coords -i image.jpg -o ./output -c "100,50,600,400"
