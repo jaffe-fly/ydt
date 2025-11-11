@@ -81,7 +81,7 @@ class TestImageRotation:
 
         # Rotate 90 degrees
         rotated_image, rotated_labels = rotate_image_with_labels(
-            image, labels, 90, FormatType.OBB
+            image, labels, 90, format_type="obb"
         )
 
         # Check image dimensions
@@ -100,7 +100,7 @@ class TestImageRotation:
             labels = [line.strip() for line in f.readlines()]
 
         rotated_image, rotated_labels = rotate_image_with_labels(
-            image, labels, 180, FormatType.OBB
+            image, labels, 180, format_type="obb"
         )
 
         # Image dimensions should be the same
@@ -114,7 +114,7 @@ class TestImageRotation:
             labels = [line.strip() for line in f.readlines()]
 
         rotated_image, rotated_labels = rotate_image_with_labels(
-            image, labels, 90, FormatType.BBOX
+            image, labels, 90, format_type="bbox"
         )
 
         assert len(rotated_labels) == len(labels)
@@ -128,10 +128,10 @@ class TestImageSlicing:
         output_dir = temp_dir / "sliced"
 
         result = slice_dataset(
-            dataset_dir=sample_dataset,
+            input_dir=sample_dataset,
             output_dir=output_dir,
-            slice_count=2,
-            overlap_ratio=0.1
+            horizontal_count=2,
+            overlap_ratio_horizontal=0.1
         )
 
         assert "total_images" in result
@@ -152,7 +152,10 @@ class TestImageSlicing:
     def test_slice_dataset_nonexistent_input(self, temp_dir):
         """Test error handling for nonexistent input"""
         with pytest.raises(FileNotFoundError):
-            slice_dataset("nonexistent", temp_dir / "output")
+            slice_dataset(
+                input_dir="nonexistent",
+                output_dir=temp_dir / "output"
+            )
 
 
 class TestImageResizing:
@@ -229,8 +232,8 @@ class TestDataAugmentation:
         output_dir = temp_dir / "augmented"
 
         result = augment_dataset(
-            data_yaml=sample_dataset / "data.yaml",
-            output_dir=output_dir
+            dataset_path=sample_dataset,
+            output_path=output_dir
         )
 
         assert "total_augmented" in result
@@ -251,8 +254,8 @@ class TestDataAugmentation:
         output_dir = temp_dir / "augmented"
 
         result = augment_dataset(
-            data_yaml=sample_dataset / "data.yaml",
-            output_dir=output_dir,
+            dataset_path=sample_dataset,
+            output_path=output_dir,
             angles=[0, 90, 180]
         )
 
@@ -261,4 +264,7 @@ class TestDataAugmentation:
     def test_augment_dataset_nonexistent_yaml(self, temp_dir):
         """Test error handling for nonexistent YAML"""
         with pytest.raises(FileNotFoundError):
-            augment_dataset("nonexistent.yaml", temp_dir / "output")
+            augment_dataset(
+                dataset_path="nonexistent.yaml",
+                output_path=temp_dir / "output"
+            )

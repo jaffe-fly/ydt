@@ -19,7 +19,7 @@ class TestCompleteWorkflows:
 
     def run_ydt_command(self, args, cwd=None, timeout=60):
         """Helper to run ydt command"""
-        cmd = [sys.executable, "-m", "cli.main"] + args
+        cmd = [sys.executable, "-m", "ydt.cli.main"] + args
         result = subprocess.run(
             cmd,
             capture_output=True,
