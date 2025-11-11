@@ -128,7 +128,8 @@ ydt image crop-coords -i image.jpg -o ./cropped -c "100,50,600,400"  # 新增：
 # 数据集操作
 ydt dataset split -i data.yaml -o ./split -r 0.8
 ydt dataset merge -i ./ds1 ./ds2 -o ./merged
-ydt dataset synthesize -t ./targets -b ./backgrounds -o ./synthetic --objects-per-image 2-5 --split train --train-ratio 0.8
+ydt dataset synthesize -t ./targets -b ./backgrounds -o ./synthetic --objects-per-image 2-5 --split train
+ydt dataset synthesize -t ./targets -b ./backgrounds -o ./synthetic --data-yaml ./data.yaml --rotation-range=-20,20  # 带类别验证和旋转限制
 ydt dataset auto-label -i ./images -m ./yolo11n.pt --format bbox -o ./labeled
 
 # 可视化
@@ -183,9 +184,11 @@ synthesizer = DatasetSynthesizer(
     target_dir="./targets",
     background_dir="./backgrounds",
     output_dir="./synthetic",
-    objects_per_image=(2, 5),  # 每张图2-5个物体
-    split_mode="trainval",      # 生成训练+验证集
-    train_ratio=0.8            # 80%训练，20%验证
+    objects_per_image=(2, 5),       # 每张图2-5个物体
+    split_mode="trainval",           # 生成训练+验证集
+    train_ratio=0.8,                 # 80%训练，20%验证
+    data_yaml_path="./data.yaml",    # 验证类别名（如 bn_back.jpg 需要 names 中有 'bn'）
+    rotation_range=(-20, 20)         # 限制旋转角度为 ±20 度
 )
 stats = synthesizer.synthesize_dataset(num_images=1000)
 

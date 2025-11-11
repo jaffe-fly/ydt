@@ -4,10 +4,10 @@ build-backend = "hatchling.build"
 
 [project]
 name = "yolodt"
-version = "0.2.6"
+version = "0.2.7"
 description = "YOLO Dataset Tools - Comprehensive toolkit for YOLO format dataset processing"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 license = {text = "MIT"}
 authors = [
     {name = "YDT Contributors"},
@@ -28,8 +28,6 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -53,9 +51,7 @@ dependencies = [
 dev = [
     "pytest>=7.0.0",
     "pytest-cov>=3.0.0",
-    "black>=22.0.0",
-    "ruff>=0.1.0",
-    "mypy>=0.950",
+    "ruff>=0.14.0",
 ]
 
 [project.scripts]
@@ -69,18 +65,35 @@ Issues = "https://github.com/jaffe-fly/ydt/issues"
 [tool.hatch.build.targets.wheel]
 packages = ["ydt"]
 
-[tool.black]
-line-length = 100
-target-version = ['py38', 'py39', 'py310', 'py311']
-
 [tool.ruff]
 line-length = 100
-target-version = "py38"
+target-version = "py310"
 
-[tool.mypy]
-python_version = "3.8"
-warn_return_any = true
-warn_unused_configs = true
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501",  # line too long (handled by formatter)
+    "B008",  # do not perform function calls in argument defaults
+    "B904",  # raise from within except without specifying exception
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]  # Allow unused imports in __init__.py
+"tests/*" = ["B018"]       # Allow useless expressions in tests
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

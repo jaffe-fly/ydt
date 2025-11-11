@@ -6,6 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.2.7] - 2025-11-11
+
+### Added
+- **Dataset Synthesize Enhancements**
+  - Added `--data-yaml` parameter to specify data.yaml path for class name validation
+  - Target filenames must now contain class names from data.yaml when this parameter is used
+  - Example: For class name 'bn' in data.yaml, target files should be named like 'bn_back.jpg' or 'front_bn.png'
+  - Added `--rotation-range` parameter to limit rotation angles (format: "min,max" in degrees)
+  - Default rotation range is -90,90 degrees; can be customized (e.g., `--rotation-range=-20,20` for small rotations)
+  - **Important:** Use equals sign (=) for negative values: `--rotation-range=-20,20` (argparse limitation with negative numbers)
+
+### Changed
+- **Dataset Synthesize Validation**
+  - Class name matching is now required when data.yaml is provided
+  - Clear error messages when target filenames don't match any class names
+  - Rotation angle sampling now respects custom rotation range
+  - Improved logging to show matched class names for each target file
+
+### Technical Details
+- Updated `DatasetSynthesizer` class to accept `data_yaml_path` and `rotation_range` parameters
+- Modified `_load_target_data()` to validate filenames against class names
+- Modified `_sample_rotation_angle()` to use configurable rotation range
+- Added comprehensive examples in README and README_CN
+
+
 ## [0.2.6] - 2025-11-11
 
 ### Fixed

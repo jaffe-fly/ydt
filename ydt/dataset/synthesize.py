@@ -55,6 +55,8 @@ class DatasetSynthesizer:
         target_area_ratio: Tuple[float, float] = (0.04, 0.06),
         objects_per_image: Optional[Union[int, Tuple[int, int]]] = None,
         split_mode: str = "trainval",
+        data_yaml_path: Optional[Union[str, Path]] = None,
+        rotation_range: Optional[Tuple[float, float]] = None,
     ):
         """
         Initialize dataset synthesizer.
@@ -72,9 +74,12 @@ class DatasetSynthesizer:
             target_area_ratio: Target area as fraction of background area
             objects_per_image: Objects per image (int) or range (tuple) overriding min/max_objects
             split_mode: Dataset split mode ("train" or "trainval")
+            data_yaml_path: Optional path to data.yaml for class name validation
+            rotation_range: Optional tuple (min_angle, max_angle) for rotation limits in degrees
 
         Raises:
             RuntimeError: If no valid target or background images found
+            ValueError: If target filenames don't match class names in data.yaml
         """
         self.target_dir = Path(target_dir)
         self.background_dir = Path(background_dir)
@@ -82,10 +87,46 @@ class DatasetSynthesizer:
         self.target_size_range = target_size_range
         self.max_overlap_ratio = max_overlap_ratio
         self.train_ratio = train_ratio
-        self.class_names = class_names or {}
-        self.name_to_id = {name: cid for cid, name in self.class_names.items()}
         self.target_area_ratio = target_area_ratio
         self.split_mode = split_mode
+
+        # Load class names from data.yaml if provided
+        if data_yaml_path:
+            data_yaml_path = Path(data_yaml_path)
+            if not data_yaml_path.exists():
+                raise FileNotFoundError(f"data.yaml not found: {data_yaml_path}")
+
+            with open(data_yaml_path, "r", encoding="utf-8") as f:
+                data_config = yaml.safe_load(f)
+
+            # Extract class names from data.yaml
+            if "names" not in data_config:
+                raise ValueError(f"No 'names' field found in {data_yaml_path}")
+
+            yaml_names = data_config["names"]
+            if isinstance(yaml_names, dict):
+                # Format: {0: "class1", 1: "class2"}
+                self.class_names = yaml_names
+            elif isinstance(yaml_names, list):
+                # Format: ["class1", "class2"]
+                self.class_names = {i: name for i, name in enumerate(yaml_names)}
+            else:
+                raise ValueError(f"Invalid 'names' format in {data_yaml_path}")
+
+            logger.info(f"Loaded class names from {data_yaml_path}: {self.class_names}")
+        else:
+            self.class_names = class_names or {}
+
+        self.name_to_id = {name: cid for cid, name in self.class_names.items()}
+
+        # Set rotation range
+        if rotation_range:
+            self.rotation_range = rotation_range
+            logger.info(
+                f"Using custom rotation range: {rotation_range[0]}° to {rotation_range[1]}°"
+            )
+        else:
+            self.rotation_range = (-90.0, 90.0)  # Default range
 
         # Handle objects_per_image parameter
         if objects_per_image is not None:
@@ -135,10 +176,12 @@ class DatasetSynthesizer:
 
         Raises:
             RuntimeError: If no valid target images found
+            ValueError: If class names are required but filename doesn't match any class
         """
         image_extensions = [".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff"]
         class_name_list = sorted(self.name_to_id.keys(), key=len, reverse=True)
         targets: List[Dict] = []
+        require_class_validation = bool(self.class_names)  # Validate if class names are provided
 
         for img_path in self.target_dir.rglob("*"):
             if img_path.suffix.lower() not in image_extensions:
@@ -166,11 +209,28 @@ class DatasetSynthesizer:
 
             # Infer class from filename
             class_id = 0
+            matched_class_name = None
             stem_lower = img_path.stem.lower()
+
             for name in class_name_list:
                 if name.lower() in stem_lower:
                     class_id = self.name_to_id[name]
+                    matched_class_name = name
                     break
+
+            # Validate that filename contains a class name if class names are provided
+            if require_class_validation and matched_class_name is None:
+                available_names = ", ".join([f"'{name}'" for name in class_name_list])
+                raise ValueError(
+                    f"Target filename '{img_path.name}' does not contain any class name from data.yaml.\n"
+                    f"Available class names: {available_names}\n"
+                    f"Example: For class name 'bn', filename should be 'bn_back.jpg' or 'front_bn.png'"
+                )
+
+            if matched_class_name:
+                logger.info(
+                    f"Matched '{img_path.name}' to class '{matched_class_name}' (ID: {class_id})"
+                )
 
             targets.append(
                 {
@@ -221,13 +281,24 @@ class DatasetSynthesizer:
 
         return backgrounds
 
-    @staticmethod
-    def _sample_rotation_angle() -> float:
-        """Sample rotation angle avoiding near-zero angles"""
-        while True:
-            angle = random.uniform(-90, 90)
-            if abs(angle) >= 5:
+    def _sample_rotation_angle(self) -> float:
+        """
+        Sample rotation angle from configured range.
+
+        Returns:
+            Random angle within self.rotation_range, avoiding near-zero angles (±5°) when possible
+        """
+        min_angle, max_angle = self.rotation_range
+        max_attempts = 50
+
+        for _ in range(max_attempts):
+            angle = random.uniform(min_angle, max_angle)
+            # Avoid near-zero angles if the range allows it
+            if abs(angle) >= 5 or (min_angle < -5 or max_angle > 5):
                 return angle
+
+        # If we can't avoid near-zero after max_attempts, just return a random angle
+        return random.uniform(min_angle, max_angle)
 
     def _rotate_with_padding(
         self, image: np.ndarray, mask: np.ndarray, angle: float

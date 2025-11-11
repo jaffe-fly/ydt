@@ -7,7 +7,7 @@ Provides easy-to-use commands for YOLO dataset processing.
 import argparse
 import sys
 
-__version__ = "0.2.6"
+__version__ = "0.2.7"
 
 
 def create_parser():
@@ -170,6 +170,16 @@ def create_parser():
         type=float,
         default=0.8,
         help="Train ratio for train/val split (default: 0.8)",
+    )
+    synth_p.add_argument(
+        "--data-yaml",
+        help="Path to data.yaml file for class names validation. Target filenames must contain class names (e.g., bn_back.jpg requires class name 'bn' in data.yaml)",
+    )
+    synth_p.add_argument(
+        "--rotation-range",
+        default="-90,90",
+        metavar="MIN,MAX",
+        help='Rotation angle range in degrees, format: "min,max" (default: -90,90). Use --rotation-range=-20,20 (with equals sign) for negative values',
     )
 
     # dataset auto-label
@@ -459,6 +469,19 @@ def handle_dataset_command(args):
                 )
                 return 1
 
+        # Parse rotation_range parameter
+        rotation_range = None
+        if hasattr(args, "rotation_range") and args.rotation_range:
+            try:
+                min_angle, max_angle = map(float, args.rotation_range.split(","))
+                rotation_range = (min_angle, max_angle)
+                logger.info(f"Rotation range: {rotation_range[0]}° to {rotation_range[1]}°")
+            except ValueError:
+                logger.error(
+                    f"Invalid rotation range format: {args.rotation_range}. Use format like '-20,20'"
+                )
+                return 1
+
         synthesizer = DatasetSynthesizer(
             args.targets,
             args.backgrounds,
@@ -466,6 +489,8 @@ def handle_dataset_command(args):
             objects_per_image=objects_per_image,
             split_mode=args.split,
             train_ratio=args.train_ratio,
+            data_yaml_path=args.data_yaml if hasattr(args, "data_yaml") else None,
+            rotation_range=rotation_range,
         )
         synthesizer.synthesize_dataset(num_images=args.num)
 

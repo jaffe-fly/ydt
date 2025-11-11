@@ -124,7 +124,8 @@ ydt image crop-coords -i image.jpg -o ./cropped -c "100,50,600,400"  # NEW: Sing
 # Dataset operations
 ydt dataset split -i data.yaml -o ./split -r 0.8
 ydt dataset merge -i ./ds1 ./ds2 -o ./merged
-ydt dataset synthesize -t ./targets -b ./backgrounds -o ./synthetic --objects-per-image 2-5 --split train --train-ratio 0.8
+ydt dataset synthesize -t ./targets -b ./backgrounds -o ./synthetic --objects-per-image 2-5 --split train
+ydt dataset synthesize -t ./targets -b ./backgrounds -o ./synthetic --data-yaml ./data.yaml --rotation-range=-20,20  # With class validation and limited rotation
 ydt dataset auto-label -i ./images -m ./yolo11n.pt --format bbox -o ./labeled
 
 # Visualization
@@ -179,9 +180,11 @@ synthesizer = DatasetSynthesizer(
     target_dir="./targets",
     background_dir="./backgrounds",
     output_dir="./synthetic",
-    objects_per_image=(2, 5),  # 2-5 objects per image
-    split_mode="trainval",      # Generate train+val
-    train_ratio=0.8            # 80% train, 20% val
+    objects_per_image=(2, 5),       # 2-5 objects per image
+    split_mode="trainval",           # Generate train+val
+    train_ratio=0.8,                 # 80% train, 20% val
+    data_yaml_path="./data.yaml",    # Validate class names (e.g., bn_back.jpg requires 'bn' in names)
+    rotation_range=(-20, 20)         # Limit rotation to ±20 degrees
 )
 stats = synthesizer.synthesize_dataset(num_images=1000)
 
