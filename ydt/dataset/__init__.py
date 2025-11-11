@@ -7,7 +7,7 @@ Provides dataset manipulation operations:
 - Synthetic dataset generation
 """
 
-from .split import split_dataset, merge_datasets
+from .split import merge_datasets, split_dataset
 from .synthesize import DatasetSynthesizer
 
 __all__ = [

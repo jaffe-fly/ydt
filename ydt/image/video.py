@@ -7,7 +7,6 @@ Provides utilities to extract frames from video files for dataset creation.
 import concurrent.futures
 import threading
 from pathlib import Path
-from typing import List, Union
 
 import cv2
 
@@ -17,10 +16,10 @@ logger = get_logger(__name__)
 
 
 def extract_frames(
-    video_path: Union[str, Path],
-    frames_output_dir: Union[str, Path],
+    video_path: str | Path,
+    frames_output_dir: str | Path,
     step: int = 40,
-    supported_formats: List[str] = None,
+    supported_formats: list[str] = None,
 ) -> int:
     """
     Extract frames from video files with specified interval.
@@ -78,7 +77,7 @@ def extract_frames(
         for ext in supported_formats:
             video_files_set.update(video_path.rglob(f"*{ext}"))
             video_files_set.update(video_path.rglob(f"*{ext.upper()}"))
-        video_files = sorted(list(video_files_set))
+        video_files = sorted(video_files_set)
 
     if not video_files:
         raise ValueError(f"No supported video files found in: {video_path}")
@@ -254,11 +253,11 @@ def _process_single_video(video_file: Path, frames_output_dir: Path, step: int) 
 
 
 def extract_frames_parallel(
-    video_path: Union[str, Path],
-    frames_output_dir: Union[str, Path],
+    video_path: str | Path,
+    frames_output_dir: str | Path,
     step: int = 40,
     max_workers: int = None,
-    supported_formats: List[str] = None,
+    supported_formats: list[str] = None,
 ) -> int:
     """
     Extract frames from video files using parallel processing for multiple videos.
@@ -317,7 +316,7 @@ def extract_frames_parallel(
         for ext in supported_formats:
             video_files_set.update(video_path.rglob(f"*{ext}"))
             video_files_set.update(video_path.rglob(f"*{ext.upper()}"))
-        video_files = sorted(list(video_files_set))
+        video_files = sorted(video_files_set)
 
     if not video_files:
         raise ValueError(f"No supported video files found in: {video_path}")

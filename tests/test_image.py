@@ -2,12 +2,14 @@
 Test image processing module functionality
 """
 
-import pytest
-import cv2
 from pathlib import Path
-from ydt.image.video import extract_frames
+
+import cv2
+import pytest
+
+from ydt.image.augment import augment_dataset, rotate_image_with_labels
 from ydt.image.slice import slice_dataset
-from ydt.image.augment import rotate_image_with_labels, augment_dataset
+from ydt.image.video import extract_frames
 
 
 class TestVideoExtraction:

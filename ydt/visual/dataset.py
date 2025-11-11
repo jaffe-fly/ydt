@@ -6,7 +6,6 @@ and label filtering capabilities.
 """
 
 from pathlib import Path
-from typing import List, Optional, Tuple, Union
 
 import cv2
 import numpy as np
@@ -18,11 +17,11 @@ logger = get_logger(__name__)
 
 
 def draw_obb(
-    points: List[float],
+    points: list[float],
     img: np.ndarray,
-    color: Optional[Tuple[int, int, int]] = None,
-    label: Optional[str] = None,
-    line_thickness: Optional[int] = None,
+    color: tuple[int, int, int] | None = None,
+    label: str | None = None,
+    line_thickness: int | None = None,
 ) -> None:
     """
     Draw oriented bounding box on image.
@@ -86,11 +85,11 @@ def draw_obb(
 
 
 def visualize_dataset(
-    dataset_path: Union[str, Path],
-    filter_labels: Optional[List[str]] = None,
+    dataset_path: str | Path,
+    filter_labels: list[str] | None = None,
     scan_train: bool = True,
     scan_val: bool = True,
-    single_image_path: Optional[Union[str, Path]] = None,
+    single_image_path: str | Path | None = None,
     window_name: str = "Dataset Visualization",
     wait_key: int = 0,
 ) -> int:
@@ -145,13 +144,13 @@ def visualize_dataset(
     if not yaml_path.exists():
         raise FileNotFoundError(f"data.yaml not found: {yaml_path}")
 
-    with open(yaml_path, "r", encoding="utf-8") as f:
+    with open(yaml_path, encoding="utf-8") as f:
         data = yaml.safe_load(f)
 
     # Get class names
     names = data.get("names", {})
     if isinstance(names, list):
-        names = {i: name for i, name in enumerate(names)}
+        names = dict(enumerate(names))
 
     logger.info(f"Loaded {len(names)} class names")
 
@@ -186,7 +185,7 @@ def visualize_dataset(
                 return True
 
             try:
-                with open(label_path, "r", encoding="utf-8") as f:
+                with open(label_path, encoding="utf-8") as f:
                     for line in f:
                         parts = line.strip().split()
                         if len(parts) >= 9:  # OBB format
@@ -284,7 +283,7 @@ def visualize_dataset(
 
         # Draw labels
         if label_path.exists():
-            with open(label_path, "r", encoding="utf-8") as f:
+            with open(label_path, encoding="utf-8") as f:
                 for line in f:
                     parts = line.strip().split()
 

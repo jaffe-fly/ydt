@@ -2,12 +2,13 @@
 End-to-end tests for complete workflows
 """
 
-import pytest
 import subprocess
 import sys
 from pathlib import Path
+
 import cv2
 import numpy as np
+import pytest
 
 
 @pytest.mark.e2e
@@ -221,7 +222,7 @@ names: ['class_0', 'class_1']
         labels_dir = temp_dir / "frames" / "labels"
         labels_dir.mkdir()
 
-        for i, frame_path in enumerate(frames[:3]):  # Label first 3 frames
+        for frame_path in frames[:3]:  # Label first 3 frames
             label_path = labels_dir / frame_path.with_suffix(".txt").name
             label_path.write_text("0 0.5 0.5 0.2 0.2\n")  # Simple BBox label
 

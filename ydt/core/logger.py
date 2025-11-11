@@ -6,14 +6,13 @@ Provides consistent logging across all modules.
 
 import logging
 import sys
-from typing import Optional
 
 
 def setup_logger(
     name: str = "ydt",
     level: int = logging.INFO,
-    log_file: Optional[str] = None,
-    format_string: Optional[str] = None,
+    log_file: str | None = None,
+    format_string: str | None = None,
 ) -> logging.Logger:
     """
     Setup logger with consistent formatting

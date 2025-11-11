@@ -6,7 +6,6 @@ including support for irregular regions and interactive preview.
 """
 
 from pathlib import Path
-from typing import List, Optional, Tuple, Union
 
 import cv2
 import numpy as np
@@ -26,7 +25,7 @@ logger = get_logger(__name__)
 
 def extract_roi_with_padding(
     image: np.ndarray,
-    points: List[Tuple[int, int]],
+    points: list[tuple[int, int]],
     padding_color: int = 114,
 ) -> np.ndarray:
     """
@@ -105,10 +104,10 @@ def resize_window_to_screen(
 
 
 def visualize_regions_letterbox(
-    image_path: Union[str, Path],
-    regions: List[List[Tuple[int, int]]],
-    output_dir: Optional[Union[str, Path]] = None,
-    letterbox_size: Tuple[int, int] = (640, 640),
+    image_path: str | Path,
+    regions: list[list[tuple[int, int]]],
+    output_dir: str | Path | None = None,
+    letterbox_size: tuple[int, int] = (640, 640),
     auto: bool = False,
     scale_fill: bool = False,
     scale_up: bool = True,
@@ -270,9 +269,9 @@ def visualize_regions_letterbox(
 
 
 def visualize_letterbox(
-    image_path: Union[str, Path],
-    output_dir: Optional[Union[str, Path]] = None,
-    letterbox_size: Tuple[int, int] = (640, 640),
+    image_path: str | Path,
+    output_dir: str | Path | None = None,
+    letterbox_size: tuple[int, int] = (640, 640),
     auto: bool = False,
     scale_fill: bool = False,
     scale_up: bool = True,

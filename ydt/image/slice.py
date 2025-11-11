@@ -8,7 +8,6 @@ particularly useful for object detection tasks with oriented bounding boxes (OBB
 import os
 import shutil
 from pathlib import Path
-from typing import Dict, Optional, Set, Tuple, Union
 
 import cv2
 import numpy as np
@@ -22,11 +21,11 @@ logger = get_logger(__name__)
 
 def convert_label_coordinates(
     label_line: str,
-    original_size: Tuple[int, int],
-    crop_box: Tuple[int, int, int, int],
-    new_size: Tuple[int, int],
-    format_type: Optional[str] = None,
-) -> Optional[str]:
+    original_size: tuple[int, int],
+    crop_box: tuple[int, int, int, int],
+    new_size: tuple[int, int],
+    format_type: str | None = None,
+) -> str | None:
     """
     Convert label coordinates to fit cropped and scaled images.
 
@@ -145,20 +144,20 @@ def convert_label_coordinates(
 
 
 def slice_dataset(
-    input_dir: Union[str, Path],
-    output_dir: Union[str, Path],
+    input_dir: str | Path,
+    output_dir: str | Path,
     horizontal_count: int = 3,
-    vertical_count: Optional[int] = None,
+    vertical_count: int | None = None,
     overlap_ratio_horizontal: float = 0.1,
     overlap_ratio_vertical: float = 0.0,
-    crop_x1: Optional[int] = None,
-    crop_x2: Optional[int] = None,
-    crop_y1: Optional[int] = None,
-    crop_y2: Optional[int] = None,
+    crop_x1: int | None = None,
+    crop_x2: int | None = None,
+    crop_y1: int | None = None,
+    crop_y2: int | None = None,
     test_mode: bool = False,
     test_count: int = 2,
-    format_type: Optional[str] = None,
-) -> Dict[str, int]:
+    format_type: str | None = None,
+) -> dict[str, int]:
     """
     Slice images using SAHI and process corresponding label files.
 
@@ -241,8 +240,8 @@ def slice_dataset(
     total_slices = 0
 
     # If has subfolders, collect all sliced image paths
-    train_images: Set[str] = set()
-    val_images: Set[str] = set()
+    train_images: set[str] = set()
+    val_images: set[str] = set()
 
     for idx, img_path in enumerate(image_files, 1):
         try:
@@ -375,7 +374,7 @@ def slice_dataset(
 
                     if label_path.exists():
                         # If original label file exists, convert coordinates
-                        with open(label_path, "r") as f:
+                        with open(label_path) as f:
                             original_labels = f.readlines()
 
                         # Convert label coordinates
@@ -439,13 +438,13 @@ def slice_dataset(
 
         # Save train and val image paths
         if train_images:
-            train_list = sorted(list(train_images))
+            train_list = sorted(train_images)
             with open(output_dir / "train.txt", "w", encoding="utf-8") as f:
                 f.write("\n".join(train_list))
             logger.info(f"Generated train.txt with {len(train_images)} image paths")
 
         if val_images:
-            val_list = sorted(list(val_images))
+            val_list = sorted(val_images)
             with open(output_dir / "val.txt", "w", encoding="utf-8") as f:
                 f.write("\n".join(val_list))
             logger.info(f"Generated val.txt with {len(val_images)} image paths")

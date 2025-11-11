@@ -2,11 +2,12 @@
 pytest fixtures and configuration for YDT tests
 """
 
-import tempfile
 import shutil
+import tempfile
 from pathlib import Path
-import numpy as np
+
 import cv2
+import numpy as np
 import pytest
 
 # Test data directory

@@ -4,18 +4,19 @@
 提供完整的自动标注流程，包括模型预测、数据集结构创建和标签生成。
 """
 
-import yaml
 from pathlib import Path
-from typing import List, Union, Optional
+
+import yaml
 
 from ydt.core.logger import get_logger
+
 from .model_utils import ModelPredictor
 from .structure import DatasetStructure
 
 logger = get_logger(__name__)
 
 
-def create_data_yaml(output_dir: Path, class_names: List[str]) -> Path:
+def create_data_yaml(output_dir: Path, class_names: list[str]) -> Path:
     """
     创建data.yaml配置文件
 
@@ -31,7 +32,7 @@ def create_data_yaml(output_dir: Path, class_names: List[str]) -> Path:
     try:
         # 创建精简的data.yaml，只包含必要字段
         data = {
-            "names": {i: name for i, name in enumerate(class_names)},
+            "names": dict(enumerate(class_names)),
             "path": str(output_dir.absolute()),
             "train": "images",
         }
@@ -69,11 +70,11 @@ def validate_format(format_type: str) -> str:
 
 
 def auto_label_dataset(
-    input_dir: Union[str, Path],
-    model_path: Union[str, Path],
+    input_dir: str | Path,
+    model_path: str | Path,
     format_type: str,
-    output_dir: Optional[Union[str, Path]] = None,
-    device: Union[int, str] = 0,
+    output_dir: str | Path | None = None,
+    device: int | str = 0,
     conf_threshold: float = 0.25,
     iou_threshold: float = 0.7,
     dry_run: bool = False,

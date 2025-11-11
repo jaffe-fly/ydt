@@ -2,16 +2,17 @@
 Common utility functions for dataset processing
 """
 
-import yaml
 from pathlib import Path
-from typing import Dict, List, Optional, Union
-from .logger import get_logger
+
+import yaml
+
 from .formats import FormatType
+from .logger import get_logger
 
 logger = get_logger(__name__)
 
 
-def scan_empty_labels(directory: Union[str, Path]) -> List[Path]:
+def scan_empty_labels(directory: str | Path) -> list[Path]:
     """
     Scan directory for empty label files
 
@@ -48,11 +49,11 @@ def scan_empty_labels(directory: Union[str, Path]) -> List[Path]:
 
 
 def update_label_classes(
-    labels_dir: Union[str, Path],
-    class_mapping: Dict[int, int],
-    format_type: Optional[FormatType] = None,
+    labels_dir: str | Path,
+    class_mapping: dict[int, int],
+    format_type: FormatType | None = None,
     dry_run: bool = False,
-) -> Dict[str, int]:
+) -> dict[str, int]:
     """
     Update class IDs in label files according to mapping
 
@@ -85,7 +86,7 @@ def update_label_classes(
 
     for label_file in label_files:
         try:
-            with open(label_file, "r", encoding="utf-8") as f:
+            with open(label_file, encoding="utf-8") as f:
                 lines = f.readlines()
 
             if not lines:
@@ -142,8 +143,8 @@ def update_label_classes(
 
 
 def generate_class_mapping(
-    old_yaml: Union[str, Path], new_yaml: Union[str, Path]
-) -> Optional[Dict[int, int]]:
+    old_yaml: str | Path, new_yaml: str | Path
+) -> dict[int, int] | None:
     """
     Generate class ID mapping from old dataset to new dataset
 
@@ -160,9 +161,9 @@ def generate_class_mapping(
         ...     print(f"Generated mapping for {len(mapping)} classes")
     """
     try:
-        with open(old_yaml, "r", encoding="utf-8") as f:
+        with open(old_yaml, encoding="utf-8") as f:
             old_data = yaml.safe_load(f)
-        with open(new_yaml, "r", encoding="utf-8") as f:
+        with open(new_yaml, encoding="utf-8") as f:
             new_data = yaml.safe_load(f)
 
         old_names = old_data.get("names", {})
@@ -174,9 +175,9 @@ def generate_class_mapping(
 
         # Convert to dict if list
         if isinstance(old_names, list):
-            old_names = {i: name for i, name in enumerate(old_names)}
+            old_names = dict(enumerate(old_names))
         if isinstance(new_names, list):
-            new_names = {i: name for i, name in enumerate(new_names)}
+            new_names = dict(enumerate(new_names))
 
         # Create mapping
         mapping = {}
@@ -197,7 +198,7 @@ def generate_class_mapping(
         return None
 
 
-def find_label_files(directory: Union[str, Path]) -> List[Path]:
+def find_label_files(directory: str | Path) -> list[Path]:
     """
     Find all label files in directory.
 
@@ -224,8 +225,8 @@ def find_label_files(directory: Union[str, Path]) -> List[Path]:
 
 
 def count_class_distribution(
-    labels_dir: Union[str, Path], format_type: Optional[FormatType] = None
-) -> Optional[Dict[int, int]]:
+    labels_dir: str | Path, format_type: FormatType | None = None
+) -> dict[int, int] | None:
     """
     Count class distribution in label directory
 
@@ -252,7 +253,7 @@ def count_class_distribution(
 
     for label_file in label_files:
         try:
-            with open(label_file, "r", encoding="utf-8") as f:
+            with open(label_file, encoding="utf-8") as f:
                 lines = f.readlines()
 
             for line in lines:
@@ -290,7 +291,7 @@ def count_class_distribution(
     return class_counts
 
 
-def read_yaml_config(yaml_path: Union[str, Path]) -> Optional[Dict]:
+def read_yaml_config(yaml_path: str | Path) -> dict | None:
     """
     Read YAML configuration file
 
@@ -301,14 +302,14 @@ def read_yaml_config(yaml_path: Union[str, Path]) -> Optional[Dict]:
         Dictionary with configuration or None if error
     """
     try:
-        with open(yaml_path, "r", encoding="utf-8") as f:
+        with open(yaml_path, encoding="utf-8") as f:
             return yaml.safe_load(f)
     except Exception as e:
         logger.error(f"Error reading YAML file {yaml_path}: {str(e)}")
         return None
 
 
-def write_yaml_config(yaml_path: Union[str, Path], data: Dict) -> bool:
+def write_yaml_config(yaml_path: str | Path, data: dict) -> bool:
     """
     Write YAML configuration file
 

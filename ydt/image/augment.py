@@ -6,7 +6,6 @@ for both OBB and bbox formats.
 """
 
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple, Union
 
 import cv2
 import numpy as np
@@ -20,10 +19,10 @@ logger = get_logger(__name__)
 
 def preprocess_image_with_labels(
     image: np.ndarray,
-    label_lines: List[str],
+    label_lines: list[str],
     padding: int = 20,
-    format_type: Optional[FormatType] = None,
-) -> Tuple[np.ndarray, List[str], Dict[str, int]]:
+    format_type: FormatType | None = None,
+) -> tuple[np.ndarray, list[str], dict[str, int]]:
     """
     Preprocess image by cropping to annotation bounding box with padding.
 
@@ -223,11 +222,11 @@ def preprocess_image_with_labels(
 
 def rotate_image_with_labels(
     image: np.ndarray,
-    label_lines: List[str],
+    label_lines: list[str],
     angle: float,
-    format_type: Optional[FormatType] = None,
+    format_type: FormatType | None = None,
     min_area_ratio: float = 0.33,
-) -> Tuple[Optional[np.ndarray], Optional[List[str]]]:
+) -> tuple[np.ndarray | None, list[str] | None]:
     """
     Rotate image and transform label coordinates.
 
@@ -347,15 +346,15 @@ def rotate_image_with_labels(
 
 
 def augment_dataset(
-    dataset_path: Union[str, Path],
-    output_path: Union[str, Path],
-    angles: Optional[List[float]] = None,
-    class_specific_angles: Optional[Dict[Set[int], List[float]]] = None,
-    format_type: Optional[FormatType] = None,
+    dataset_path: str | Path,
+    output_path: str | Path,
+    angles: list[float] | None = None,
+    class_specific_angles: dict[set[int], list[float]] | None = None,
+    format_type: FormatType | None = None,
     preprocess: bool = True,
     test_mode: bool = False,
     test_count: int = 20,
-) -> Dict[str, int]:
+) -> dict[str, int]:
     """
     Batch augment dataset with rotation.
 
@@ -446,7 +445,7 @@ def augment_dataset(
                 stats["skipped"] += 1
                 continue
 
-            with open(label_path, "r", encoding="utf-8") as f:
+            with open(label_path, encoding="utf-8") as f:
                 label_lines = f.readlines()
 
             # Preprocess if requested
@@ -568,7 +567,7 @@ def augment_dataset(
                 stats["skipped"] += 1
                 continue
 
-            with open(label_path, "r", encoding="utf-8") as f:
+            with open(label_path, encoding="utf-8") as f:
                 label_lines = f.readlines()
 
             # Preprocess if requested

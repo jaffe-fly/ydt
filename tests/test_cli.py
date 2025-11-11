@@ -4,6 +4,7 @@ Test CLI interface functionality
 
 import subprocess
 import sys
+
 import pytest
 
 

@@ -5,17 +5,19 @@ Provides functions for combining multiple images into a single image.
 """
 
 from pathlib import Path
-from typing import Union, Literal
+from typing import Literal
+
 from PIL import Image
+
 from ydt.core.logger import get_logger
 
 logger = get_logger(__name__)
 
 
 def concat_images_horizontally(
-    image1_path: Union[str, Path],
-    image2_path: Union[str, Path],
-    output_path: Union[str, Path],
+    image1_path: str | Path,
+    image2_path: str | Path,
+    output_path: str | Path,
     alignment: Literal["top", "center", "bottom"] = "center",
     background_color: str = "white",
 ) -> Path:
@@ -101,13 +103,13 @@ def concat_images_horizontally(
 
     except Exception as e:
         logger.error(f"Error concatenating images: {str(e)}")
-        raise IOError(f"Failed to concatenate images: {str(e)}")
+        raise OSError(f"Failed to concatenate images: {str(e)}")
 
 
 def concat_images_vertically(
-    image1_path: Union[str, Path],
-    image2_path: Union[str, Path],
-    output_path: Union[str, Path],
+    image1_path: str | Path,
+    image2_path: str | Path,
+    output_path: str | Path,
     alignment: Literal["left", "center", "right"] = "center",
     background_color: str = "white",
 ) -> Path:
@@ -177,4 +179,4 @@ def concat_images_vertically(
 
     except Exception as e:
         logger.error(f"Error concatenating images vertically: {str(e)}")
-        raise IOError(f"Failed to concatenate images: {str(e)}")
+        raise OSError(f"Failed to concatenate images: {str(e)}")

@@ -9,7 +9,6 @@ import random
 import re
 import shutil
 from pathlib import Path
-from typing import Dict, List, Set, Tuple, Union
 
 import yaml
 
@@ -19,12 +18,12 @@ logger = get_logger(__name__)
 
 
 def split_dataset(
-    data_yaml_path: Union[str, Path],
-    output_dir: Union[str, Path],
+    data_yaml_path: str | Path,
+    output_dir: str | Path,
     train_ratio: float = 0.8,
     balance_rotation: bool = False,
     balance_classes: bool = True,
-) -> Dict[str, int]:
+) -> dict[str, int]:
     """
     Split dataset into train and validation sets with balanced distribution.
 
@@ -63,7 +62,7 @@ def split_dataset(
         raise ValueError(f"train_ratio must be between 0 and 1, got {train_ratio}")
 
     # Read YAML config
-    with open(data_yaml_path, "r", encoding="utf-8") as f:
+    with open(data_yaml_path, encoding="utf-8") as f:
         data_config = yaml.safe_load(f)
 
     # Get source directories
@@ -90,10 +89,10 @@ def split_dataset(
     logger.info(f"Found {len(image_files)} images")
 
     # Collect class and rotation information
-    class_samples: Dict[int, List[str]] = {}
-    rotation_samples: Dict[int, List[str]] = {}
-    image_classes: Dict[str, Set[int]] = {}
-    image_rotation: Dict[str, int] = {}
+    class_samples: dict[int, list[str]] = {}
+    rotation_samples: dict[int, list[str]] = {}
+    image_classes: dict[str, set[int]] = {}
+    image_rotation: dict[str, int] = {}
 
     rotation_pattern = re.compile(r"rot_(\d+)")
 
@@ -114,7 +113,7 @@ def split_dataset(
         # Read labels to get classes
         if label_path.exists():
             image_classes[img_file] = set()
-            with open(label_path, "r", encoding="utf-8") as f:
+            with open(label_path, encoding="utf-8") as f:
                 for line in f:
                     line = line.strip()
                     if not line:
@@ -135,7 +134,7 @@ def split_dataset(
     logger.info(f"Target validation set size: {total_val_count}")
 
     # Define scoring function for balanced split
-    def get_image_score(img: str) -> Tuple:
+    def get_image_score(img: str) -> tuple:
         class_count = len(image_classes.get(img, set()))
         if balance_rotation:
             rotation_count = len(
@@ -148,7 +147,7 @@ def split_dataset(
     sorted_images = sorted(image_files, key=get_image_score)
 
     # Initialize validation set
-    val_images: Set[str] = set()
+    val_images: set[str] = set()
     class_val_samples = {class_id: set() for class_id in class_samples.keys()}
 
     if balance_rotation:
@@ -256,12 +255,12 @@ def split_dataset(
 
 
 def merge_datasets(
-    dataset_dirs: List[Union[str, Path]],
-    output_dir: Union[str, Path],
+    dataset_dirs: list[str | Path],
+    output_dir: str | Path,
     merge_train: bool = True,
     merge_val: bool = True,
     handle_duplicates: str = "rename",
-) -> Dict[str, int]:
+) -> dict[str, int]:
     """
     Merge multiple datasets into a single dataset.
 
@@ -419,7 +418,7 @@ def merge_datasets(
     # Copy YAML file from first dataset
     yaml_path = dataset_dirs[0] / "data.yaml"
     if yaml_path.exists():
-        with open(yaml_path, "r", encoding="utf-8") as f:
+        with open(yaml_path, encoding="utf-8") as f:
             data_config = yaml.safe_load(f)
 
         if merge_train:

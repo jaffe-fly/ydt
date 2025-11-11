@@ -7,10 +7,11 @@ OBB format: class_id x1 y1 x2 y2 x3 y3 x4 y4 (9 values, normalized 0-1)
 BBox format: class_id x_center y_center width height (5 values, normalized 0-1)
 """
 
-import numpy as np
-from typing import List, Tuple, Union, Literal
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Literal
+
+import numpy as np
 
 FormatType = Literal["obb", "bbox"]
 
@@ -25,7 +26,7 @@ class BBoxFormat:
     width: float
     height: float
 
-    def to_list(self) -> List[Union[int, float]]:
+    def to_list(self) -> list[int | float]:
         """Convert to list format"""
         return [self.class_id, self.x_center, self.y_center, self.width, self.height]
 
@@ -41,7 +42,7 @@ class OBBFormat:
     class_id: int
     points: np.ndarray  # shape: (4, 2) - 4 points with (x, y) coordinates
 
-    def to_list(self) -> List[Union[int, float]]:
+    def to_list(self) -> list[int | float]:
         """Convert to list format"""
         flat_points = self.points.flatten().tolist()
         return [self.class_id] + flat_points
@@ -54,7 +55,7 @@ class OBBFormat:
 
 def parse_label_line(
     line: str, format_type: FormatType = "bbox"
-) -> Union[BBoxFormat, OBBFormat, None]:
+) -> BBoxFormat | OBBFormat | None:
     """
     Parse a label line into appropriate format
 
@@ -99,7 +100,7 @@ def parse_label_line(
     return None
 
 
-def detect_format(label_file: Union[str, Path] = None, label_line: str = None) -> FormatType:
+def detect_format(label_file: str | Path = None, label_line: str = None) -> FormatType:
     """
     Auto-detect format type from label file or label line
 
@@ -135,7 +136,7 @@ def detect_format(label_file: Union[str, Path] = None, label_line: str = None) -
         raise FileNotFoundError(f"Label file not found: {str(label_path)}")
 
     # Read first non-empty line
-    with open(label_path, "r", encoding="utf-8") as f:
+    with open(label_path, encoding="utf-8") as f:
         for line in f:
             line = line.strip()
             if line:  # Skip empty lines
@@ -209,7 +210,7 @@ def convert_obb_to_bbox(obb: OBBFormat) -> BBoxFormat:
 
 
 def normalize_coordinates(
-    coords: Union[List[float], np.ndarray], image_size: Tuple[int, int]
+    coords: list[float] | np.ndarray, image_size: tuple[int, int]
 ) -> np.ndarray:
     """
     Normalize absolute coordinates to 0-1 range
@@ -240,7 +241,7 @@ def normalize_coordinates(
 
 
 def denormalize_coordinates(
-    coords: Union[List[float], np.ndarray], image_size: Tuple[int, int]
+    coords: list[float] | np.ndarray, image_size: tuple[int, int]
 ) -> np.ndarray:
     """
     Convert normalized coordinates (0-1) to absolute pixel coordinates

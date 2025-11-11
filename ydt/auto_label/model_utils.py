@@ -5,7 +5,6 @@
 """
 
 from pathlib import Path
-from typing import List, Tuple, Union
 
 import numpy as np
 
@@ -25,7 +24,7 @@ logger = get_logger(__name__)
 class ModelPredictor:
     """YOLO模型预测器"""
 
-    def __init__(self, model_path: Union[str, Path], device: Union[int, str] = 0):
+    def __init__(self, model_path: str | Path, device: int | str = 0):
         """
         初始化模型预测器
 
@@ -76,8 +75,8 @@ class ModelPredictor:
             return False
 
     def predict(
-        self, image_path: Union[str, Path], conf_threshold: float = 0.25, iou_threshold: float = 0.7
-    ) -> Tuple[List[dict], str]:
+        self, image_path: str | Path, conf_threshold: float = 0.25, iou_threshold: float = 0.7
+    ) -> tuple[list[dict], str]:
         """
         对单张图片进行预测
 
@@ -141,7 +140,7 @@ class ModelPredictor:
             logger.error(f"预测失败 {image_path}: {e}")
             raise
 
-    def get_class_names(self) -> List[str]:
+    def get_class_names(self) -> list[str]:
         """获取模型类别名称"""
         if hasattr(self.model.model, "names"):
             return list(self.model.model.names.values())

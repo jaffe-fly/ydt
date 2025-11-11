@@ -5,7 +5,6 @@ This module provides functions for resizing and cropping images with various met
 """
 
 from pathlib import Path
-from typing import List, Tuple, Union
 
 import cv2
 import numpy as np
@@ -81,9 +80,9 @@ def center_crop_image(image: np.ndarray, target_width: int, target_height: int) 
 
 
 def process_single_image_multi_method(
-    input_file: Union[str, Path],
-    output_dir: Union[str, Path],
-    target_sizes: List[int],
+    input_file: str | Path,
+    output_dir: str | Path,
+    target_sizes: list[int],
     use_crop: bool = False,
 ) -> int:
     """
@@ -152,8 +151,8 @@ def process_single_image_multi_method(
 
 
 def process_images_multi_method(
-    input_path: Union[str, Path], output_dir: Union[str, Path], target_sizes: List[int]
-) -> Tuple[int, int]:
+    input_path: str | Path, output_dir: str | Path, target_sizes: list[int]
+) -> tuple[int, int]:
     """
     Process images using both scaling and cropping methods.
 
@@ -263,14 +262,14 @@ def crop_image_by_coords(image: np.ndarray, x1: int, y1: int, x2: int, y2: int) 
 
 
 def crop_directory_by_coords(
-    input_dir: Union[str, Path],
-    output_dir: Union[str, Path],
+    input_dir: str | Path,
+    output_dir: str | Path,
     x1: int,
     y1: int,
     x2: int,
     y2: int,
     recursive: bool = True,
-) -> Tuple[int, int]:
+) -> tuple[int, int]:
     """
     Crop all images in a directory based on specified coordinates.
 

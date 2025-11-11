@@ -5,9 +5,8 @@
 """
 
 import shutil
-from pathlib import Path
-from typing import List, Tuple, Optional, Union
 from datetime import datetime
+from pathlib import Path
 
 from ydt.core.logger import get_logger
 
@@ -17,7 +16,7 @@ logger = get_logger(__name__)
 class DatasetStructure:
     """YOLO数据集结构管理器"""
 
-    def __init__(self, output_dir: Optional[Union[str, Path]] = None):
+    def __init__(self, output_dir: str | Path | None = None):
         """
         初始化数据集结构管理器
 
@@ -54,7 +53,7 @@ class DatasetStructure:
             logger.error(f"创建数据集结构失败: {e}")
             raise
 
-    def copy_image(self, image_path: Union[str, Path]) -> Path:
+    def copy_image(self, image_path: str | Path) -> Path:
         """
         复制图片到数据集目录
 
@@ -79,7 +78,7 @@ class DatasetStructure:
             logger.error(f"复制图片失败 {image_path}: {e}")
             raise
 
-    def save_label(self, image_name: str, detections: List[dict], format_type: str) -> Path:
+    def save_label(self, image_name: str, detections: list[dict], format_type: str) -> Path:
         """
         保存标签文件
 
@@ -145,7 +144,7 @@ class DatasetStructure:
             logger.error(f"获取统计信息失败: {e}")
             return {}
 
-    def clear_empty_files(self) -> Tuple[int, int]:
+    def clear_empty_files(self) -> tuple[int, int]:
         """
         清理空文件
 

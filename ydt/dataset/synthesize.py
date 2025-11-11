@@ -8,7 +8,6 @@ onto background images with automatic OBB label generation.
 import math
 import random
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
 
 import cv2
 import numpy as np
@@ -43,20 +42,20 @@ class DatasetSynthesizer:
 
     def __init__(
         self,
-        target_dir: Union[str, Path],
-        background_dir: Union[str, Path],
-        output_dir: Union[str, Path],
-        target_size_range: Tuple[float, float] = (0.1, 0.3),
+        target_dir: str | Path,
+        background_dir: str | Path,
+        output_dir: str | Path,
+        target_size_range: tuple[float, float] = (0.1, 0.3),
         max_overlap_ratio: float = 0.5,
         min_objects_per_image: int = 1,
         max_objects_per_image: int = 12,
         train_ratio: float = 0.8,
-        class_names: Optional[Dict[int, str]] = None,
-        target_area_ratio: Tuple[float, float] = (0.04, 0.06),
-        objects_per_image: Optional[Union[int, Tuple[int, int]]] = None,
+        class_names: dict[int, str] | None = None,
+        target_area_ratio: tuple[float, float] = (0.04, 0.06),
+        objects_per_image: int | tuple[int, int] | None = None,
         split_mode: str = "trainval",
-        data_yaml_path: Optional[Union[str, Path]] = None,
-        rotation_range: Optional[Tuple[float, float]] = None,
+        data_yaml_path: str | Path | None = None,
+        rotation_range: tuple[float, float] | None = None,
     ):
         """
         Initialize dataset synthesizer.
@@ -96,7 +95,7 @@ class DatasetSynthesizer:
             if not data_yaml_path.exists():
                 raise FileNotFoundError(f"data.yaml not found: {data_yaml_path}")
 
-            with open(data_yaml_path, "r", encoding="utf-8") as f:
+            with open(data_yaml_path, encoding="utf-8") as f:
                 data_config = yaml.safe_load(f)
 
             # Extract class names from data.yaml
@@ -109,7 +108,7 @@ class DatasetSynthesizer:
                 self.class_names = yaml_names
             elif isinstance(yaml_names, list):
                 # Format: ["class1", "class2"]
-                self.class_names = {i: name for i, name in enumerate(yaml_names)}
+                self.class_names = dict(enumerate(yaml_names))
             else:
                 raise ValueError(f"Invalid 'names' format in {data_yaml_path}")
 
@@ -167,7 +166,7 @@ class DatasetSynthesizer:
             ]:
                 sub.mkdir(parents=True, exist_ok=True)
 
-    def _load_target_data(self) -> List[Dict]:
+    def _load_target_data(self) -> list[dict]:
         """
         Load target object images with masks and class information.
 
@@ -180,7 +179,7 @@ class DatasetSynthesizer:
         """
         image_extensions = [".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff"]
         class_name_list = sorted(self.name_to_id.keys(), key=len, reverse=True)
-        targets: List[Dict] = []
+        targets: list[dict] = []
         require_class_validation = bool(self.class_names)  # Validate if class names are provided
 
         for img_path in self.target_dir.rglob("*"):
@@ -193,7 +192,7 @@ class DatasetSynthesizer:
                 continue
 
             # Handle different image formats
-            mask: Optional[np.ndarray] = None
+            mask: np.ndarray | None = None
             if img.ndim == 2:
                 img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
             elif img.ndim == 3:
@@ -253,7 +252,7 @@ class DatasetSynthesizer:
 
         return targets
 
-    def _load_background_images(self) -> List[np.ndarray]:
+    def _load_background_images(self) -> list[np.ndarray]:
         """
         Load background images.
 
@@ -264,7 +263,7 @@ class DatasetSynthesizer:
             RuntimeError: If no valid background images found
         """
         image_extensions = [".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff"]
-        backgrounds: List[np.ndarray] = []
+        backgrounds: list[np.ndarray] = []
 
         for img_path in self.background_dir.rglob("*"):
             if img_path.suffix.lower() not in image_extensions:
@@ -302,7 +301,7 @@ class DatasetSynthesizer:
 
     def _rotate_with_padding(
         self, image: np.ndarray, mask: np.ndarray, angle: float
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Rotate image and mask with padding to avoid cropping.
 
@@ -373,12 +372,12 @@ class DatasetSynthesizer:
     def _resize_and_rotate_target(
         self,
         target_img: np.ndarray,
-        target_annotations: List[Dict],
+        target_annotations: list[dict],
         bg_width: int,
         bg_height: int,
-        target_mask: Optional[np.ndarray] = None,
-        desired_short_side: Optional[int] = None,
-    ) -> Tuple[np.ndarray, List[Dict], np.ndarray]:
+        target_mask: np.ndarray | None = None,
+        desired_short_side: int | None = None,
+    ) -> tuple[np.ndarray, list[dict], np.ndarray]:
         """
         Resize and rotate target with proper annotation transformation.
 
@@ -467,7 +466,7 @@ class DatasetSynthesizer:
                 final_w, final_h = new_w2, new_h2
 
         # Transform annotations
-        rotated_annotations: List[Dict] = []
+        rotated_annotations: list[dict] = []
         total_scale = 1.0
         if fit_scale < 1.0:
             total_scale *= fit_scale
@@ -496,7 +495,7 @@ class DatasetSynthesizer:
 
         return rotated, rotated_annotations, rotated_mask
 
-    def _overlaps_too_much(self, placed: List[Dict], new_obbs: List[Dict]) -> bool:
+    def _overlaps_too_much(self, placed: list[dict], new_obbs: list[dict]) -> bool:
         """
         Check if new OBBs overlap too much with existing objects.
 
@@ -542,10 +541,10 @@ class DatasetSynthesizer:
         self,
         background: np.ndarray,
         target_img: np.ndarray,
-        target_annotations: List[Dict],
-        existing_objects: List[Dict],
-        target_mask: Optional[np.ndarray] = None,
-    ) -> Optional[Dict]:
+        target_annotations: list[dict],
+        existing_objects: list[dict],
+        target_mask: np.ndarray | None = None,
+    ) -> dict | None:
         """
         Place target on background at random valid position.
 
@@ -610,7 +609,7 @@ class DatasetSynthesizer:
 
         return None
 
-    def _synthesize_single_image(self, background: np.ndarray) -> Tuple[np.ndarray, List[Dict]]:
+    def _synthesize_single_image(self, background: np.ndarray) -> tuple[np.ndarray, list[dict]]:
         """
         Synthesize a single image by placing multiple targets on background.
 
@@ -632,14 +631,14 @@ class DatasetSynthesizer:
         indices = [random.randrange(len(self.target_data)) for _ in range(desired_targets)]
 
         # Calculate minimum short side
-        candidate_shorts: List[int] = []
+        candidate_shorts: list[int] = []
         for idx in indices:
             td = self.target_data[idx]
             candidate_shorts.append(int(max(1, min(td["height"], td["width"]))))
         desired_short_side = int(min(candidate_shorts)) if candidate_shorts else 1
 
         # Place objects
-        placed_objects: List[Dict] = []
+        placed_objects: list[dict] = []
         attempts = 0
         max_attempts = max(200, desired_targets * 60)
 
@@ -670,9 +669,9 @@ class DatasetSynthesizer:
 
         return synthesized, placed_objects
 
-    def _generate_yolo_annotations(self, placed_objects: List[Dict]) -> List[str]:
+    def _generate_yolo_annotations(self, placed_objects: list[dict]) -> list[str]:
         """Generate YOLO OBB format annotations"""
-        annotations: List[str] = []
+        annotations: list[str] = []
         for obj in placed_objects:
             for obb in obj["obbs"]:
                 line = str(obb["class_id"])
@@ -681,7 +680,7 @@ class DatasetSynthesizer:
                 annotations.append(line)
         return annotations
 
-    def _create_data_yaml(self, class_names: Dict[int, str]) -> None:
+    def _create_data_yaml(self, class_names: dict[int, str]) -> None:
         """Create data.yaml configuration file"""
         yaml_content = {
             "names": class_names,
@@ -698,8 +697,8 @@ class DatasetSynthesizer:
             yaml.dump(yaml_content, f, default_flow_style=False, allow_unicode=True)
 
     def synthesize_dataset(
-        self, num_images: int, class_names: Optional[Dict[int, str]] = None
-    ) -> Dict[str, int]:
+        self, num_images: int, class_names: dict[int, str] | None = None
+    ) -> dict[str, int]:
         """
         Synthesize complete dataset with train/val splits.
 

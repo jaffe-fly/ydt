@@ -6,7 +6,6 @@ including HSV adjustments and advanced transformations using albumentations.
 """
 
 from pathlib import Path
-from typing import Optional, Union
 
 import cv2
 import numpy as np
@@ -68,11 +67,11 @@ def show_side_by_side(
 
 
 def visualize_hsv_augmentation(
-    image_path: Union[str, Path],
+    image_path: str | Path,
     h_gain: float = 0.02,
     s_gain: float = 0.8,
     v_gain: float = 0.3,
-    output_path: Optional[Union[str, Path]] = None,
+    output_path: str | Path | None = None,
 ) -> None:
     """
     Visualize HSV augmentation effect.
@@ -155,9 +154,9 @@ def visualize_hsv_augmentation(
 
 
 def visualize_albumentations(
-    image_path: Union[str, Path],
-    transforms: Optional[A.Compose] = None,
-    output_path: Optional[Union[str, Path]] = None,
+    image_path: str | Path,
+    transforms: A.Compose | None = None,
+    output_path: str | Path | None = None,
 ) -> None:
     """
     Visualize albumentations augmentation effects.
@@ -261,10 +260,10 @@ def visualize_albumentations(
 
 
 def visualize_multiple_augmentations(
-    image_path: Union[str, Path],
-    transforms: Optional[A.Compose] = None,
+    image_path: str | Path,
+    transforms: A.Compose | None = None,
     num_examples: int = 4,
-    output_path: Optional[Union[str, Path]] = None,
+    output_path: str | Path | None = None,
 ) -> None:
     """
     Visualize multiple random augmentation examples in a grid.
@@ -324,7 +323,7 @@ def visualize_multiple_augmentations(
 
     # Generate augmented examples
     images = [image]  # Original
-    for i in range(num_examples):
+    for _ in range(num_examples):
         transformed = transforms(image=image)
         images.append(transformed["image"])
 
