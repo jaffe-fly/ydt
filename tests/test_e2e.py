@@ -3,14 +3,11 @@ End-to-end tests for complete workflows
 """
 
 import pytest
-import tempfile
-import shutil
 import subprocess
 import sys
 from pathlib import Path
 import cv2
 import numpy as np
-import yaml
 
 
 @pytest.mark.e2e

@@ -4,9 +4,7 @@ Test CLI interface functionality
 
 import subprocess
 import sys
-from pathlib import Path
 import pytest
-import yaml
 
 
 class TestCLIInterface:

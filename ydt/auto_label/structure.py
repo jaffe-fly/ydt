@@ -4,7 +4,6 @@
 提供YOLO数据集目录结构的创建和管理功能。
 """
 
-import os
 import shutil
 from pathlib import Path
 from typing import List, Tuple, Optional, Union
@@ -46,7 +45,7 @@ class DatasetStructure:
             self.images_dir.mkdir(exist_ok=True)
             self.labels_dir.mkdir(exist_ok=True)
 
-            logger.info(f"已创建数据集结构:")
+            logger.info("已创建数据集结构:")
             logger.info(f"  输出目录: {self.output_dir}")
             logger.info(f"  图片目录: {self.images_dir}")
             logger.info(f"  标签目录: {self.labels_dir}")
@@ -101,7 +100,6 @@ class DatasetStructure:
                 for detection in detections:
                     class_id = detection["class_id"]
                     coords = detection["coordinates"]
-                    confidence = detection["confidence"]
 
                     if format_type == "obb":
                         # OBB格式: class_id x1 y1 x2 y2 x3 y3 x4 y4

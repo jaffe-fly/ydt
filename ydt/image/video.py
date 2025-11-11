@@ -4,10 +4,10 @@ Video processing operations for YOLO dataset creation.
 Provides utilities to extract frames from video files for dataset creation.
 """
 
-from pathlib import Path
-from typing import Union, List
 import concurrent.futures
 import threading
+from pathlib import Path
+from typing import List, Union
 
 import cv2
 
@@ -163,7 +163,7 @@ def extract_frames(
             total_saved_count += saved_count
             processed_videos += 1
 
-        logger.info(f"All videos processed!")
+        logger.info("All videos processed!")
         logger.info(f"Total images saved: {total_saved_count}")
         logger.info(f"Output directory: {frames_output_dir}")
 
@@ -207,7 +207,7 @@ def _process_single_video(video_file: Path, frames_output_dir: Path, step: int) 
     fps = cap.get(cv2.CAP_PROP_FPS)
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    duration = total_frames / fps if fps > 0 else 0
+    _ = total_frames / fps if fps > 0 else 0
 
     thread_logger.info(f"Processing: {video_file.name}")
     thread_logger.info(
@@ -363,7 +363,7 @@ def extract_frames_parallel(
             except Exception as e:
                 logger.error(f"Error processing {video_file.name}: {e}")
 
-        logger.info(f"All videos processed in parallel!")
+        logger.info("All videos processed in parallel!")
         logger.info(f"Total images saved: {total_saved_count}")
         logger.info(f"Output directory: {frames_output_dir}")
 

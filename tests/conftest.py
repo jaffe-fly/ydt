@@ -2,7 +2,6 @@
 pytest fixtures and configuration for YDT tests
 """
 
-import os
 import tempfile
 import shutil
 from pathlib import Path

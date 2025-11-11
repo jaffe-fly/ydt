@@ -6,7 +6,7 @@ import yaml
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 from .logger import get_logger
-from .formats import FormatType, detect_format
+from .formats import FormatType
 
 logger = get_logger(__name__)
 
@@ -91,9 +91,6 @@ def update_label_classes(
             if not lines:
                 stats["skipped"] += 1
                 continue
-
-            # Auto-detect format if not specified
-            file_format = format_type or detect_format(label_line=lines[0].strip())
 
             new_lines = []
             file_modified = False

@@ -9,7 +9,6 @@ from pathlib import Path
 from typing import List, Union, Optional
 
 from ydt.core.logger import get_logger
-from ydt.core.formats import BBoxFormat, OBBFormat
 from .model_utils import ModelPredictor
 from .structure import DatasetStructure
 

@@ -4,9 +4,9 @@
 提供YOLO模型的加载和预测功能。
 """
 
-import os
 from pathlib import Path
-from typing import List, Tuple, Union, Optional
+from typing import List, Tuple, Union
+
 import numpy as np
 
 try:
@@ -18,7 +18,6 @@ except ImportError:
     YOLO = None
 
 from ydt.core.logger import get_logger
-from ydt.core.formats import BBoxFormat, OBBFormat
 
 logger = get_logger(__name__)
 

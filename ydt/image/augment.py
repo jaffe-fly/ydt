@@ -153,8 +153,8 @@ def preprocess_image_with_labels(
         crop_info = {"x": 0, "y": min_y, "width": width, "height": max_y - min_y}
 
     logger.debug(
-        f"Crop region: x:{crop_info['x']}-{crop_info['x']+crop_info['width']}, "
-        f"y:{crop_info['y']}-{crop_info['y']+crop_info['height']}"
+        f"Crop region: x:{crop_info['x']}-{crop_info['x'] + crop_info['width']}, "
+        f"y:{crop_info['y']}-{crop_info['y'] + crop_info['height']}"
     )
 
     # Update labels
@@ -318,7 +318,7 @@ def rotate_image_with_labels(
         # Filter out severely distorted annotations
         if rotated_area < original_area * min_area_ratio:
             logger.debug(
-                f"Skipping annotation: area ratio {rotated_area/original_area:.2f} < {min_area_ratio}"
+                f"Skipping annotation: area ratio {rotated_area / original_area:.2f} < {min_area_ratio}"
             )
             continue
 

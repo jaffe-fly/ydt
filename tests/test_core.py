@@ -3,8 +3,7 @@ Test core module functionality
 """
 
 import pytest
-from pathlib import Path
-from ydt.core.formats import FormatType, detect_format, OBBFormat, BBoxFormat, parse_label_line
+from ydt.core.formats import detect_format, parse_label_line
 from ydt.core.utils import count_class_distribution, find_label_files
 
 

@@ -258,7 +258,7 @@ def crop_image_by_coords(image: np.ndarray, x1: int, y1: int, x2: int, y2: int) 
     # Crop the image
     cropped = image[y1:y2, x1:x2]
 
-    logger.debug(f"Cropped image from {width}x{height} to {(x2-x1)}x{(y2-y1)}")
+    logger.debug(f"Cropped image from {width}x{height} to {(x2 - x1)}x{(y2 - y1)}")
     return cropped
 
 
@@ -352,8 +352,7 @@ def crop_directory_by_coords(
             height, width = img.shape[:2]
             if x1 < 0 or y1 < 0 or x2 > width or y2 > height:
                 logger.warning(
-                    f"Skip {image_file.name}: crop region outside image bounds "
-                    f"({width}x{height})"
+                    f"Skip {image_file.name}: crop region outside image bounds ({width}x{height})"
                 )
                 failure_count += 1
                 continue
