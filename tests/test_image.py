@@ -9,7 +9,6 @@ from pathlib import Path
 from ydt.image.video import extract_frames
 from ydt.image.slice import slice_dataset
 from ydt.image.augment import rotate_image_with_labels, augment_dataset
-from ydt.core.formats import FormatType
 
 
 class TestVideoExtraction:
@@ -151,68 +150,8 @@ class TestImageSlicing:
             slice_dataset(input_dir="nonexistent", output_dir=temp_dir / "output")
 
 
-class TestImageResizing:
-    """Test image resizing functionality"""
-
-    @pytest.mark.skip(
-        reason="resize_images function does not exist, use process_images_multi_method instead"
-    )
-    def test_resize_images_scale_method(self, temp_dir):
-        """Test image resizing with scale method"""
-        # Create test images
-        images_dir = temp_dir / "images"
-        output_dir = temp_dir / "resized"
-        images_dir.mkdir()
-
-        # Create multiple test images
-        for i in range(3):
-            img_path = images_dir / f"img_{i}.jpg"
-            image = np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8)
-            cv2.imwrite(str(img_path), image)
-
-        count = resize_images(
-            input_dir=images_dir, output_dir=output_dir, target_size=320, method="scale"
-        )
-
-        assert count == 3
-        assert output_dir.exists()
-
-        # Check resized images
-        resized_images = list(output_dir.glob("*.jpg"))
-        assert len(resized_images) == 3
-
-        # Verify dimensions
-        for img_path in resized_images:
-            img = cv2.imread(str(img_path))
-            assert img.shape[0] == 320  # height
-            assert img.shape[1] == 320  # width (square)
-
-    @pytest.mark.skip(
-        reason="resize_images function does not exist, use process_images_multi_method instead"
-    )
-    def test_resize_images_crop_method(self, temp_dir):
-        """Test image resizing with crop method"""
-        images_dir = temp_dir / "images"
-        output_dir = temp_dir / "cropped"
-        images_dir.mkdir()
-
-        # Create a large image
-        img_path = images_dir / "large.jpg"
-        large_image = np.random.randint(0, 255, (800, 1000, 3), dtype=np.uint8)
-        cv2.imwrite(str(img_path), large_image)
-
-        count = resize_images(
-            input_dir=images_dir, output_dir=output_dir, target_size=256, method="crop"
-        )
-
-        assert count == 1
-        cropped_images = list(output_dir.glob("*.jpg"))
-        assert len(cropped_images) == 1
-
-        # Verify dimensions
-        img = cv2.imread(str(cropped_images[0]))
-        assert img.shape[0] == 256
-        assert img.shape[1] == 256
+# TestImageResizing class removed - resize_images function does not exist
+# Use process_images_multi_method from ydt.image.resize instead
 
 
 class TestDataAugmentation:
