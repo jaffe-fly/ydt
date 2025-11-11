@@ -4,8 +4,8 @@ Test core module functionality
 
 import pytest
 from pathlib import Path
-from core.formats import FormatType, detect_format, OBBFormat, BBoxFormat
-from core.utils import count_class_distribution, find_label_files
+from ydt.core.formats import FormatType, detect_format, OBBFormat, BBoxFormat
+from ydt.core.utils import count_class_distribution, find_label_files
 
 
 class TestFormatDetection:

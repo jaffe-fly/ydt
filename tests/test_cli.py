@@ -14,7 +14,7 @@ class TestCLIInterface:
 
     def run_cli_command(self, args, cwd=None):
         """Helper to run CLI command"""
-        cmd = [sys.executable, "-m", "cli.main"] + args
+        cmd = [sys.executable, "-m", "ydt.cli.main"] + args
         result = subprocess.run(
             cmd,
             capture_output=True,
@@ -36,7 +36,7 @@ class TestCLIInterface:
         """Test CLI version command"""
         result = self.run_cli_command(["--version"])
         assert result.returncode == 0
-        assert "ydt 0.1.0" in result.stdout
+        assert "ydt 0.2.5" in result.stdout
 
     def test_image_help(self):
         """Test image module help"""
@@ -183,4 +183,4 @@ class TestCLIWithYDTCommand:
 
         result = subprocess.run(["ydt", "--version"], capture_output=True, text=True)
         assert result.returncode == 0
-        assert "ydt 0.1.0" in result.stdout
+        assert "ydt 0.2.5" in result.stdout
