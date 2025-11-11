@@ -223,7 +223,7 @@ names: ['class_0', 'class_1']
 
         for i, frame_path in enumerate(frames[:3]):  # Label first 3 frames
             label_path = labels_dir / frame_path.with_suffix(".txt").name
-            label_path.write_text(f"0 0.5 0.5 0.2 0.2\n")  # Simple BBox label
+            label_path.write_text("0 0.5 0.5 0.2 0.2\n")  # Simple BBox label
 
         # Create dataset structure for visualization test
         dataset_yaml = temp_dir / "frames" / "data.yaml"

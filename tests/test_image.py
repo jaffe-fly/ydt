@@ -3,7 +3,6 @@ Test image processing module functionality
 """
 
 import pytest
-import numpy as np
 import cv2
 from pathlib import Path
 from ydt.image.video import extract_frames
