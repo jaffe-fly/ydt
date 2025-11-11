@@ -50,8 +50,8 @@ jobs:
 
     - name: Test CLI installation
       run: |
-        ydt --version
-        ydt --help
+        uv run ydt --version
+        uv run ydt --help
 
     - name: Run linting
       run: |
