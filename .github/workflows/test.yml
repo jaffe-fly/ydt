@@ -39,6 +39,7 @@ jobs:
       run: uv run python -m build
 
     - name: Install built package
+      shell: bash
       run: uv pip install dist/*.whl --force-reinstall
 
     - name: Run unit tests
