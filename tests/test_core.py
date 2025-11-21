@@ -45,24 +45,6 @@ class TestOBBFormat:
         assert len(obb.points) == 4
         assert tuple(obb.points[0]) == (0.1, 0.1)
 
-    @pytest.mark.skip(reason="to_bbox method not implemented in OBBFormat")
-    def test_obb_to_bbox(self):
-        """Test OBB to BBox conversion"""
-        obb = parse_label_line("0 0.1 0.1 0.3 0.1 0.3 0.3 0.1 0.3", "obb")
-        bbox = obb.to_bbox()
-        assert bbox.class_id == 0
-        assert bbox.x_center == 0.2
-        assert bbox.y_center == 0.2
-        assert bbox.width == 0.2
-        assert bbox.height == 0.2
-
-    @pytest.mark.skip(reason="to_absolute method not implemented in OBBFormat")
-    def test_obb_to_absolute(self):
-        """Test OBB to absolute coordinates"""
-        obb = parse_label_line("0 0.1 0.1 0.3 0.1 0.3 0.3 0.1 0.3", "obb")
-        points = obb.to_absolute(640, 480)
-        assert len(points) == 4
-        assert points[0] == (64, 48)
 
 
 class TestBBoxFormat:
@@ -77,23 +59,6 @@ class TestBBoxFormat:
         assert bbox.width == 0.2
         assert bbox.height == 0.1
 
-    @pytest.mark.skip(reason="to_obb method not implemented in BBoxFormat")
-    def test_bbox_to_obb(self):
-        """Test BBox to OBB conversion"""
-        bbox = parse_label_line("0 0.5 0.5 0.2 0.1", "bbox")
-        obb = bbox.to_obb()
-        assert obb.class_id == 0
-        assert len(obb.points) == 4
-
-    @pytest.mark.skip(reason="to_absolute method not implemented in BBoxFormat")
-    def test_bbox_to_absolute(self):
-        """Test BBox to absolute coordinates"""
-        bbox = parse_label_line("0 0.5 0.5 0.2 0.1", "bbox")
-        x, y, w, h = bbox.to_absolute(640, 480)
-        assert x == 320  # 0.5 * 640
-        assert y == 240  # 0.5 * 480
-        assert w == 128  # 0.2 * 640
-        assert h == 48  # 0.1 * 480
 
 
 class TestUtils:

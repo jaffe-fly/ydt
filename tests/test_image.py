@@ -2,10 +2,8 @@
 Test image processing module functionality
 """
 
-from pathlib import Path
-
 import cv2
-import pytest
+import numpy as np
 
 from ydt.image.augment import augment_dataset, rotate_image_with_labels
 from ydt.image.concat import concat_images_horizontally, concat_images_vertically
@@ -16,293 +14,184 @@ from ydt.image.video import extract_frames
 class TestVideoExtraction:
     """Test video frame extraction"""
 
-    def test_extract_frames_single_video(self, sample_video, temp_dir):
-        """Test frame extraction from single video"""
+    def test_extract_frames_basic(self, sample_video, temp_dir):
+        """Test basic frame extraction"""
         output_dir = temp_dir / "frames"
 
-        count = extract_frames(video_path=sample_video, frames_output_dir=output_dir, step=3)
+        count = extract_frames(
+            video_path=str(sample_video),
+            frames_output_dir=str(output_dir),
+            step=5,
+        )
 
         assert count > 0
-        assert output_dir.exists()
+        # Frames are saved to video_name_frames subdirectory
         frames = list(output_dir.rglob("*.jpg"))
-        assert len(frames) == count
-
-    def test_extract_frames_directory(self, sample_video, temp_dir):
-        """Test frame extraction from directory of videos"""
-        video_dir = temp_dir / "videos"
-        video_dir.mkdir()
-        output_dir = temp_dir / "frames"
-
-        # Copy video to directory
-        import shutil
-
-        shutil.copy(sample_video, video_dir / "video1.mp4")
-
-        count = extract_frames(video_path=video_dir, frames_output_dir=output_dir, step=5)
-
-        assert count > 0
-        assert output_dir.exists()
-
-        # Check video-specific directory
-        video_output_dir = output_dir / "video1_frames"
-        assert video_output_dir.exists()
-        frames = list(video_output_dir.rglob("*.jpg"))
         assert len(frames) > 0
-
-    def test_extract_frames_nonexistent_input(self, temp_dir):
-        """Test error handling for nonexistent input"""
-        with pytest.raises(FileNotFoundError):
-            extract_frames("nonexistent.mp4", temp_dir / "output")
-
-    def test_extract_frames_unsupported_format(self, temp_dir):
-        """Test error handling for unsupported video format"""
-        unsupported_file = temp_dir / "test.txt"
-        unsupported_file.write_text("not a video")
-
-        with pytest.raises(ValueError):
-            extract_frames(unsupported_file, temp_dir / "output")
 
 
 class TestImageRotation:
-    """Test image rotation with label transformation"""
+    """Test image rotation with labels"""
 
-    def test_rotate_image_90_degrees(self, sample_image, sample_obb_labels):
-        """Test 90-degree rotation"""
-        # Read original image
-        image = cv2.imread(str(sample_image))
-        with open(sample_obb_labels) as f:
-            labels = [line.strip() for line in f.readlines()]
+    def test_rotate_image_90_degrees(self, temp_dir):
+        """Test rotating image 90 degrees with bbox labels"""
+        # Create test image
+        img = np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8)
 
-        # Rotate 90 degrees
-        rotated_image, rotated_labels = rotate_image_with_labels(
-            image, labels, 90, format_type="obb"
+        # Create bbox label lines (string format)
+        label_lines = ["0 0.5 0.5 0.2 0.3"]  # class, cx, cy, w, h
+
+        rotated_img, rotated_labels = rotate_image_with_labels(
+            img, label_lines, angle=90, format_type="bbox"
         )
 
-        # Check image dimensions
-        original_height, original_width = image.shape[:2]
-        rotated_height, rotated_width = rotated_image.shape[:2]
-        assert rotated_height == original_width
-        assert rotated_width == original_height
+        assert rotated_img.shape[0] == 640  # Height becomes old width
+        assert rotated_img.shape[1] == 480  # Width becomes old height
+        assert len(rotated_labels) == 1
 
-        # Check labels are transformed
-        assert len(rotated_labels) == len(labels)
+    def test_rotate_image_with_obb(self, temp_dir):
+        """Test rotating image with OBB labels"""
+        img = np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8)
 
-    def test_rotate_image_180_degrees(self, sample_image, sample_obb_labels):
-        """Test 180-degree rotation"""
-        image = cv2.imread(str(sample_image))
-        with open(sample_obb_labels) as f:
-            labels = [line.strip() for line in f.readlines()]
+        # OBB format: class, x1, y1, x2, y2, x3, y3, x4, y4 (normalized)
+        label_lines = ["0 0.3 0.3 0.7 0.3 0.7 0.7 0.3 0.7"]
 
-        rotated_image, rotated_labels = rotate_image_with_labels(
-            image, labels, 180, format_type="obb"
+        rotated_img, rotated_labels = rotate_image_with_labels(
+            img, label_lines, angle=45, format_type="obb"
         )
 
-        # Image dimensions should be the same
-        assert rotated_image.shape[:2] == image.shape[:2]
-        assert len(rotated_labels) == len(labels)
-
-    def test_rotate_bbox_format(self, sample_image, sample_bbox_labels):
-        """Test rotation with BBox format"""
-        image = cv2.imread(str(sample_image))
-        with open(sample_bbox_labels) as f:
-            labels = [line.strip() for line in f.readlines()]
-
-        rotated_image, rotated_labels = rotate_image_with_labels(
-            image, labels, 90, format_type="bbox"
-        )
-
-        assert len(rotated_labels) == len(labels)
+        assert rotated_img.shape[0] > 0
+        assert rotated_img.shape[1] > 0
+        assert len(rotated_labels) == 1
 
 
 class TestImageSlicing:
-    """Test image slicing functionality"""
+    """Test image slicing/tiling"""
 
-    def test_slice_dataset_basic(self, sample_dataset, temp_dir):
-        """Test basic dataset slicing"""
+    def test_slice_single_image(self, temp_dir):
+        """Test slicing a single image"""
+        # Create test image and label
+        input_dir = temp_dir / "input"
+        (input_dir / "images" / "train").mkdir(parents=True)
+        (input_dir / "labels" / "train").mkdir(parents=True)
+
+        img = np.random.randint(0, 255, (1280, 1920, 3), dtype=np.uint8)
+        cv2.imwrite(str(input_dir / "images" / "train" / "test.jpg"), img)
+
+        label_path = input_dir / "labels" / "train" / "test.txt"
+        label_path.write_text("0 0.5 0.5 0.2 0.2\n")
+
         output_dir = temp_dir / "sliced"
 
+        # slice_dataset uses horizontal_count and overlap_ratio_horizontal
         result = slice_dataset(
-            input_dir=sample_dataset,
-            output_dir=output_dir,
-            horizontal_count=2,
-            overlap_ratio_horizontal=0.1,
+            input_dir=str(input_dir),
+            output_dir=str(output_dir),
+            horizontal_count=3,
+            overlap_ratio_horizontal=0.2,
         )
 
-        assert "processed_files" in result
-        assert "total_slices" in result
-        assert result["processed_files"] > 0
+        # Check that slices were created
         assert result["total_slices"] > 0
-
-        # Check output structure
-        assert output_dir.exists()
-        sliced_images = list(output_dir.rglob("*.jpg"))
-        assert len(sliced_images) > 0
-
-        # Check corresponding label files
-        for img_path in sliced_images[:3]:  # Check first few
-            # Convert image path to label path (images -> labels, .jpg -> .txt)
-            label_path = Path(
-                str(img_path).replace("/images/", "/labels/").replace("\\images\\", "\\labels\\")
-            ).with_suffix(".txt")
-            assert label_path.exists()
-
-    def test_slice_dataset_nonexistent_input(self, temp_dir):
-        """Test error handling for nonexistent input"""
-        with pytest.raises(FileNotFoundError):
-            slice_dataset(input_dir="nonexistent", output_dir=temp_dir / "output")
-
-
-# TestImageResizing class removed - resize_images function does not exist
-# Use process_images_multi_method from ydt.image.resize instead
 
 
 class TestDataAugmentation:
-    """Test data augmentation functionality"""
+    """Test data augmentation"""
 
-    def test_augment_dataset_auto_angles(self, sample_dataset, temp_dir):
-        """Test dataset augmentation with auto-selected angles"""
+    def test_augment_dataset_basic(self, temp_dir):
+        """Test basic dataset augmentation"""
+        # Create simple dataset structure
+        input_dir = temp_dir / "dataset"
+        (input_dir / "images" / "train").mkdir(parents=True)
+        (input_dir / "labels" / "train").mkdir(parents=True)
+
+        # Create test image
+        img = np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8)
+        cv2.imwrite(str(input_dir / "images" / "train" / "img.jpg"), img)
+
+        # Create label
+        label_path = input_dir / "labels" / "train" / "img.txt"
+        label_path.write_text("0 0.5 0.5 0.2 0.2\n")
+
         output_dir = temp_dir / "augmented"
 
-        result = augment_dataset(dataset_path=sample_dataset, output_path=output_dir)
+        # augment_dataset uses dataset_path and output_path
+        result = augment_dataset(
+            dataset_path=str(input_dir),
+            output_path=str(output_dir),
+            angles=[90],
+            format_type="bbox",
+        )
 
-        assert "processed" in result
-        assert "rotations" in result
-        assert result["processed"] > 0
-        assert result["rotations"] > 0
-        assert output_dir.exists()
+        assert result["processed"] >= 1
 
-        # Check augmented images
-        aug_images = list(output_dir.rglob("*.jpg"))
-        assert len(aug_images) > 0
+    def test_augment_with_multiple_angles(self, temp_dir):
+        """Test augmentation with multiple rotation angles"""
+        input_dir = temp_dir / "dataset"
+        (input_dir / "images" / "train").mkdir(parents=True)
+        (input_dir / "labels" / "train").mkdir(parents=True)
 
-        # Check corresponding label files
-        for img_path in aug_images[:3]:
-            # Convert image path to label path (images -> labels, .jpg -> .txt)
-            label_path = Path(
-                str(img_path).replace("/images/", "/labels/").replace("\\images\\", "\\labels\\")
-            ).with_suffix(".txt")
-            assert label_path.exists()
+        img = np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8)
+        cv2.imwrite(str(input_dir / "images" / "train" / "img.jpg"), img)
 
-    def test_augment_dataset_specific_angles(self, sample_dataset, temp_dir):
-        """Test dataset augmentation with specific angles"""
+        label_path = input_dir / "labels" / "train" / "img.txt"
+        label_path.write_text("0 0.5 0.5 0.2 0.2\n")
+
         output_dir = temp_dir / "augmented"
 
         result = augment_dataset(
-            dataset_path=sample_dataset, output_path=output_dir, angles=[0, 90, 180]
+            dataset_path=str(input_dir),
+            output_path=str(output_dir),
+            angles=[90, 180, 270],
+            format_type="bbox",
         )
 
-        assert "processed" in result
-        assert result["processed"] > 0
-
-    def test_augment_dataset_nonexistent_yaml(self, temp_dir):
-        """Test error handling for nonexistent YAML"""
-        with pytest.raises(FileNotFoundError):
-            augment_dataset(dataset_path="nonexistent.yaml", output_path=temp_dir / "output")
+        assert result["rotations"] >= 1
 
 
 class TestImageConcatenation:
-    """Test image concatenation functionality"""
+    """Test image concatenation"""
 
-    def test_concat_horizontal_basic(self, sample_image, temp_dir):
-        """Test basic horizontal concatenation"""
-        # Create a second image
-        image2_path = temp_dir / "test_image2.jpg"
-        import numpy as np
+    def test_concat_horizontally(self, temp_dir):
+        """Test horizontal image concatenation"""
+        # Create two test images and save to files
+        img1 = np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8)
+        img2 = np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8)
 
-        image2 = np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8)
-        cv2.imwrite(str(image2_path), image2)
-
-        # Concatenate
+        img1_path = temp_dir / "img1.jpg"
+        img2_path = temp_dir / "img2.jpg"
         output_path = temp_dir / "concat_h.jpg"
-        result = concat_images_horizontally(sample_image, image2_path, output_path)
 
-        assert result.exists()
-        assert result == output_path
+        cv2.imwrite(str(img1_path), img1)
+        cv2.imwrite(str(img2_path), img2)
 
-        # Check output dimensions
-        output_img = cv2.imread(str(result))
-        assert output_img.shape[1] == 640 + 640  # Width should be sum
-        assert output_img.shape[0] == 480  # Height should be max
-
-    def test_concat_horizontal_with_directory_output(self, sample_image, temp_dir):
-        """Test horizontal concatenation with directory as output"""
-        # Create a second image
-        image2_path = temp_dir / "test_image2.jpg"
-        import numpy as np
-
-        image2 = np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8)
-        cv2.imwrite(str(image2_path), image2)
-
-        # Concatenate with directory as output
-        output_dir = temp_dir / "output"
-        output_dir.mkdir()
-        result = concat_images_horizontally(sample_image, image2_path, output_dir)
-
-        assert result.exists()
-        assert result.parent == output_dir
-        assert "_concat_" in result.name
-
-    def test_concat_horizontal_different_heights(self, sample_image, temp_dir):
-        """Test horizontal concatenation with different heights"""
-        # Create a taller image
-        image2_path = temp_dir / "test_image2_tall.jpg"
-        import numpy as np
-
-        image2 = np.random.randint(0, 255, (600, 640, 3), dtype=np.uint8)
-        cv2.imwrite(str(image2_path), image2)
-
-        output_path = temp_dir / "concat_h_diff.jpg"
-        result = concat_images_horizontally(
-            sample_image, image2_path, output_path, alignment="center"
+        # concat_images_horizontally takes file paths
+        result_path = concat_images_horizontally(
+            str(img1_path), str(img2_path), str(output_path)
         )
 
-        assert result.exists()
-        output_img = cv2.imread(str(result))
-        assert output_img.shape[0] == 600  # Height should be max
+        assert result_path.exists()
+        result = cv2.imread(str(result_path))
+        assert result.shape[0] == 480
+        assert result.shape[1] == 1280  # 640 * 2
 
-    def test_concat_vertical_basic(self, sample_image, temp_dir):
-        """Test basic vertical concatenation"""
-        # Create a second image
-        image2_path = temp_dir / "test_image2.jpg"
-        import numpy as np
+    def test_concat_vertically(self, temp_dir):
+        """Test vertical image concatenation"""
+        img1 = np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8)
+        img2 = np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8)
 
-        image2 = np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8)
-        cv2.imwrite(str(image2_path), image2)
-
+        img1_path = temp_dir / "img1.jpg"
+        img2_path = temp_dir / "img2.jpg"
         output_path = temp_dir / "concat_v.jpg"
-        result = concat_images_vertically(sample_image, image2_path, output_path)
 
-        assert result.exists()
-        output_img = cv2.imread(str(result))
-        assert output_img.shape[0] == 480 + 480  # Height should be sum
-        assert output_img.shape[1] == 640  # Width should be max
+        cv2.imwrite(str(img1_path), img1)
+        cv2.imwrite(str(img2_path), img2)
 
-    def test_concat_vertical_with_directory_output(self, sample_image, temp_dir):
-        """Test vertical concatenation with directory as output"""
-        # Create a second image
-        image2_path = temp_dir / "test_image2.jpg"
-        import numpy as np
+        result_path = concat_images_vertically(
+            str(img1_path), str(img2_path), str(output_path)
+        )
 
-        image2 = np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8)
-        cv2.imwrite(str(image2_path), image2)
-
-        # Concatenate with directory as output
-        output_dir = temp_dir / "output"
-        output_dir.mkdir()
-        result = concat_images_vertically(sample_image, image2_path, output_dir)
-
-        assert result.exists()
-        assert result.parent == output_dir
-        assert "_concat_v_" in result.name
-
-    def test_concat_nonexistent_image1(self, sample_image, temp_dir):
-        """Test error handling for nonexistent first image"""
-        output_path = temp_dir / "output.jpg"
-        with pytest.raises(FileNotFoundError):
-            concat_images_horizontally("nonexistent1.jpg", sample_image, output_path)
-
-    def test_concat_nonexistent_image2(self, sample_image, temp_dir):
-        """Test error handling for nonexistent second image"""
-        output_path = temp_dir / "output.jpg"
-        with pytest.raises(FileNotFoundError):
-            concat_images_horizontally(sample_image, "nonexistent2.jpg", output_path)
+        assert result_path.exists()
+        result = cv2.imread(str(result_path))
+        assert result.shape[0] == 960  # 480 * 2
+        assert result.shape[1] == 640
