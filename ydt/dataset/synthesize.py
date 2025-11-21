@@ -14,6 +14,7 @@ import numpy as np
 import yaml
 from tqdm import tqdm
 
+from ydt.core import IMAGE_EXTENSIONS
 from ydt.core.logger import get_logger
 
 logger = get_logger(__name__)
@@ -56,6 +57,7 @@ class DatasetSynthesizer:
         split_mode: str = "trainval",
         data_yaml_path: str | Path | None = None,
         rotation_range: tuple[float, float] | None = None,
+        annotation_format: str = "obb",
     ):
         """
         Initialize dataset synthesizer.
@@ -75,6 +77,7 @@ class DatasetSynthesizer:
             split_mode: Dataset split mode ("train" or "trainval")
             data_yaml_path: Optional path to data.yaml for class name validation
             rotation_range: Optional tuple (min_angle, max_angle) for rotation limits in degrees
+            annotation_format: Annotation format - "obb" (Oriented Bounding Box) or "hbb" (Horizontal Bounding Box)
 
         Raises:
             RuntimeError: If no valid target or background images found
@@ -88,6 +91,12 @@ class DatasetSynthesizer:
         self.train_ratio = train_ratio
         self.target_area_ratio = target_area_ratio
         self.split_mode = split_mode
+        self.annotation_format = annotation_format.lower()
+
+        if self.annotation_format not in ["obb", "hbb"]:
+            raise ValueError(
+                f"Invalid annotation_format: {annotation_format}. Must be 'obb' or 'hbb'"
+            )
 
         # Load class names from data.yaml if provided
         if data_yaml_path:
@@ -177,13 +186,12 @@ class DatasetSynthesizer:
             RuntimeError: If no valid target images found
             ValueError: If class names are required but filename doesn't match any class
         """
-        image_extensions = [".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff"]
         class_name_list = sorted(self.name_to_id.keys(), key=len, reverse=True)
         targets: list[dict] = []
         require_class_validation = bool(self.class_names)  # Validate if class names are provided
 
         for img_path in self.target_dir.rglob("*"):
-            if img_path.suffix.lower() not in image_extensions:
+            if img_path.suffix.lower() not in IMAGE_EXTENSIONS:
                 continue
 
             img = cv2.imread(str(img_path), cv2.IMREAD_UNCHANGED)
@@ -262,11 +270,10 @@ class DatasetSynthesizer:
         Raises:
             RuntimeError: If no valid background images found
         """
-        image_extensions = [".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff"]
         backgrounds: list[np.ndarray] = []
 
         for img_path in self.background_dir.rglob("*"):
-            if img_path.suffix.lower() not in image_extensions:
+            if img_path.suffix.lower() not in IMAGE_EXTENSIONS:
                 continue
 
             img = cv2.imread(str(img_path))
@@ -397,6 +404,19 @@ class DatasetSynthesizer:
         # Ensure mask matches image size
         if target_mask is not None and target_mask.shape[:2] != (th, tw):
             target_mask = cv2.resize(target_mask, (tw, th), interpolation=cv2.INTER_NEAREST)
+
+        # IMPORTANT: Limit maximum size before rotation to prevent memory issues
+        max_dimension = 2000  # Maximum width or height before rotation
+        if max(th, tw) > max_dimension:
+            scale_limit = max_dimension / max(th, tw)
+            new_w = max(1, int(round(tw * scale_limit)))
+            new_h = max(1, int(round(th * scale_limit)))
+            target_img = cv2.resize(target_img, (new_w, new_h), interpolation=cv2.INTER_AREA)
+            if target_mask is not None:
+                target_mask = cv2.resize(
+                    target_mask, (new_w, new_h), interpolation=cv2.INTER_NEAREST
+                )
+            th, tw = new_h, new_w
 
         # Scale down to desired short side
         base_short = max(1, min(th, tw))
@@ -670,14 +690,34 @@ class DatasetSynthesizer:
         return synthesized, placed_objects
 
     def _generate_yolo_annotations(self, placed_objects: list[dict]) -> list[str]:
-        """Generate YOLO OBB format annotations"""
+        """Generate YOLO format annotations (OBB or HBB)"""
         annotations: list[str] = []
         for obj in placed_objects:
             for obb in obj["obbs"]:
-                line = str(obb["class_id"])
-                for px, py in obb["points"]:
-                    line += f" {px:.6f} {py:.6f}"
-                annotations.append(line)
+                class_id = obb["class_id"]
+                points = obb["points"]
+
+                if self.annotation_format == "obb":
+                    # OBB format: class_id x1 y1 x2 y2 x3 y3 x4 y4
+                    line = str(class_id)
+                    for px, py in points:
+                        line += f" {px:.6f} {py:.6f}"
+                    annotations.append(line)
+                else:  # hbb
+                    # HBB format: class_id center_x center_y width height
+                    # Convert OBB points to bounding box
+                    xs = [p[0] for p in points]
+                    ys = [p[1] for p in points]
+                    x_min, x_max = min(xs), max(xs)
+                    y_min, y_max = min(ys), max(ys)
+
+                    center_x = (x_min + x_max) / 2.0
+                    center_y = (y_min + y_max) / 2.0
+                    width = x_max - x_min
+                    height = y_max - y_min
+
+                    line = f"{class_id} {center_x:.6f} {center_y:.6f} {width:.6f} {height:.6f}"
+                    annotations.append(line)
         return annotations
 
     def _create_data_yaml(self, class_names: dict[int, str]) -> None:

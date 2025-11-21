@@ -11,6 +11,7 @@ import cv2
 import numpy as np
 import yaml
 
+from ydt.core import IMAGE_EXTENSIONS
 from ydt.core.logger import get_logger
 
 logger = get_logger(__name__)
@@ -204,9 +205,8 @@ def visualize_dataset(
             train_label_dir = dataset_path / "labels" / "train"
 
             if train_img_dir.exists():
-                image_extensions = (".jpg", ".png", ".jpeg", ".PNG", ".JPG")
                 train_images = [
-                    f.name for f in train_img_dir.iterdir() if f.suffix in image_extensions
+                    f.name for f in train_img_dir.iterdir() if f.suffix in IMAGE_EXTENSIONS
                 ]
 
                 # Filter by labels
@@ -226,8 +226,7 @@ def visualize_dataset(
             val_label_dir = dataset_path / "labels" / "val"
 
             if val_img_dir.exists():
-                image_extensions = (".jpg", ".png", ".jpeg", ".PNG", ".JPG")
-                val_images = [f.name for f in val_img_dir.iterdir() if f.suffix in image_extensions]
+                val_images = [f.name for f in val_img_dir.iterdir() if f.suffix in IMAGE_EXTENSIONS]
 
                 # Filter by labels
                 if filter_labels:

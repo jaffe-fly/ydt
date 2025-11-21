@@ -6,6 +6,115 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.3.0] - 2025-11-20
+
+### Added
+- **Colored Logging**
+  - Added `colorlog` dependency for colored terminal output
+  - Different log levels now display in different colors (DEBUG=cyan, INFO=green, WARNING=yellow, ERROR=red, CRITICAL=red on white)
+  - New `use_color` parameter in `setup_logger()` function (default: True)
+  - Color support can be disabled for compatibility with non-color terminals
+
+- **Dataset Extract Feature**
+  - New `extract` command with three modes:
+    - `class`: Extract images + labels for specified class IDs
+    - `images-only`: Extract only images containing specified classes
+    - `labels-only`: Extract labels for given image directory
+  - `--filter-labels` option to keep only specified class annotations in label files
+  - `--remap-ids` option to remap class IDs to sequential 0, 1, 2... format
+  - `--operation` choice between copy/move files (default: copy)
+  - `--split` option to extract from train/val/both splits
+  - All extraction operations use class IDs instead of class names for precision
+  - Python API: `extract_by_class()`, `extract_images_only()`, `extract_labels_only()`
+
+- **Dataset Resize Feature**
+  - New `resize --mode dataset` command for batch resizing YOLO datasets
+  - Supports two common YOLO dataset structures:
+    - Structure A: `dataset/train/images`, `dataset/train/labels`
+    - Structure B: `dataset/images/train`, `dataset/labels/train`
+  - Automatic dataset structure detection
+  - `--resize-mode` options: longest, shortest, width, height (default: longest)
+  - `--interpolation` choices: linear, lanczos4 (default: linear)
+  - `--resize-all` flag to resize all images (default: only resize images smaller than target)
+  - Smart handling: by default, only upscales small images, preserves large images
+  - Label files copied without modification (YOLO uses normalized coordinates 0-1)
+  - Automatic data.yaml copying and path updating
+  - Progress logging every 100 images
+  - Returns detailed statistics: resized_count, copied_count, failed_count
+  - Python API: `resize_dataset()`
+  - Modified `resize_image()` to accept custom interpolation parameter
+
+### Fixed
+- **Dataset Merge Bug**
+  - Fixed critical bug where images with same name but different extensions (e.g., 123.jpg and 123.PNG) caused label file overwriting
+  - Root cause: Code checked full filename including extension in processed_names set
+  - Solution: Now checks only base name (without extension) to detect duplicates correctly
+  - Example: Both 123.jpg and 123.PNG now correctly detected as duplicates, second file renamed to 123_1.PNG
+
+- **Image Crop Single File Support**
+  - Fixed `crop-coords` command not recognizing single file input
+  - Added single file detection: checks if input path is a file vs directory
+  - Single file mode: saves to output directory with same filename
+  - Directory mode: maintains directory structure as before
+  - Resolves "No image files found" warning when cropping single images
+
+### Changed
+- **Dataset Merge Simplification**
+  - Removed `handle_duplicates` parameter from `merge_datasets()`
+  - Always uses "rename" strategy for handling duplicate filenames
+  - Simplified function signature and internal logic
+  - Updated tests to remove skip mode test cases
+  - Cleaner API with less complexity
+
+- **Extract API Design**
+  - Changed from class names to class IDs for better precision
+  - Parameter naming: `--class-ids` instead of `--classes`
+  - CLI parameter type changed from `str` to `int`
+  - Removed ambiguity in class name matching
+
+### Technical Details
+- **Logger Enhancement**
+  - Modified `ydt/core/logger.py` to integrate `colorlog.ColoredFormatter`
+  - Added color mapping configuration for all log levels
+  - Console handler uses colored output, file handler uses plain text
+  - Updated `pyproject.toml` to add `colorlog>=6.7.0` dependency
+
+- **Extract Implementation**
+  - New file: `ydt/dataset/extract.py` with three main functions
+  - Label filtering logic: removes non-target class annotations from label files
+  - ID remapping: creates mapping dict (e.g., {1: 0, 2: 1}) for sequential IDs
+  - data.yaml generation: updates class count and names based on extraction mode
+  - Supports both copy and move operations via `operation` parameter
+  - Handles train/val splits independently
+  - Updated `ydt/dataset/__init__.py` to export new functions
+  - CLI integration in `ydt/cli/main.py` with comprehensive parameter validation
+
+- **Resize Implementation**
+  - New function: `resize_dataset()` in `ydt/image/resize.py`
+  - Dataset structure detection using `Path.exists()` checks
+  - Separate handling for Structure A and Structure B datasets
+  - Conditional resizing based on `min_size_only` parameter and edge size comparison
+  - Interpolation mapping: {"linear": cv2.INTER_LINEAR, "lanczos4": cv2.INTER_LANCZOS4}
+  - Label file handling: direct copy using `shutil.copy2()` (preserves timestamps)
+  - Modified `resize_image()` signature to accept optional `interpolation: int | None` parameter
+  - CLI integration: extended existing `resize` command with `--mode` parameter
+  - Updated `ydt/image/__init__.py` to export `resize_dataset()`
+
+- **Merge Bug Fix**
+  - Modified `ydt/dataset/split.py` lines 372 and 417
+  - Changed from `f"{new_base_name}{ext}"` to `new_base_name` in processed_names checks
+  - Now correctly prevents duplicate base names regardless of extension
+  - Added test case to verify fix with same-name different-extension files
+
+- **Crop Single File Fix**
+  - Modified `crop_directory_by_coords()` in `ydt/image/resize.py`
+  - Added `input_path.is_file()` check to detect single file input
+  - Single file mode: creates `image_files = [input_path]` list
+  - Directory mode: uses `rglob()` or `glob()` as before
+  - Output path logic: single file saves to `output_path / image_file.name`
+  - Updated function docstring to reflect single file support
+
+
 ## [0.2.7] - 2025-11-11
 
 ### Added

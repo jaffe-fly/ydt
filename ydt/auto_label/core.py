@@ -8,6 +8,7 @@ from pathlib import Path
 
 import yaml
 
+from ydt.core import IMAGE_EXTENSIONS
 from ydt.core.logger import get_logger
 
 from .model_utils import ModelPredictor
@@ -150,15 +151,14 @@ def auto_label_dataset(
         raise
 
     # 扫描图片文件
-    image_extensions = {".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".webp"}
     image_files = []
 
-    for ext in image_extensions:
+    for ext in IMAGE_EXTENSIONS:
         image_files.extend(input_dir.glob(f"*{ext}"))
         image_files.extend(input_dir.glob(f"*{ext.upper()}"))
 
     # 递归搜索子目录
-    for ext in image_extensions:
+    for ext in IMAGE_EXTENSIONS:
         image_files.extend(input_dir.rglob(f"*{ext}"))
         image_files.extend(input_dir.rglob(f"*{ext.upper()}"))
 

@@ -5,14 +5,20 @@ Provides utilities to extract frames from video files for dataset creation.
 """
 
 import concurrent.futures
+import os
 import threading
 from pathlib import Path
+
+os.environ.setdefault("NO_ALBUMENTATIONS_UPDATE", "1")
 
 import cv2
 
 from ydt.core.logger import get_logger
 
 logger = get_logger(__name__)
+
+# Global stop event for graceful shutdown
+_stop_event = threading.Event()
 
 
 def extract_frames(
@@ -218,6 +224,11 @@ def _process_single_video(video_file: Path, frames_output_dir: Path, step: int) 
 
     # Extract frames
     while True:
+        # Check for stop signal
+        if _stop_event.is_set():
+            thread_logger.info(f"Stopping: {video_file.name} (interrupted)")
+            break
+
         ret, frame = cap.read()
         if not ret:
             break
@@ -339,50 +350,63 @@ def extract_frames_parallel(
     logger.info(f"Using {max_workers} parallel workers for processing")
 
     total_saved_count = 0
+    completed_count = 0
+
+    # Clear stop event at start
+    _stop_event.clear()
 
     # Process videos in parallel
-    executor = concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
-    try:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
         # Submit all video processing tasks
         future_to_video = {
             executor.submit(_process_single_video, video_file, frames_output_dir, step): video_file
             for video_file in video_files
         }
 
-        # Collect results as they complete
-        completed_count = 0
-        for future in concurrent.futures.as_completed(future_to_video):
-            video_file = future_to_video[future]
-            completed_count += 1
+        try:
+            # Collect results with timeout to allow interrupt checking
+            pending = set(future_to_video.keys())
+            while pending:
+                # Wait with short timeout to check for interrupts
+                done, pending = concurrent.futures.wait(
+                    pending, timeout=0.5, return_when=concurrent.futures.FIRST_COMPLETED
+                )
 
-            try:
-                saved_count = future.result()
-                total_saved_count += saved_count
-                logger.info(f"Progress: {completed_count}/{len(video_files)} videos completed")
-            except Exception as e:
-                logger.error(f"Error processing {video_file.name}: {e}")
+                for future in done:
+                    video_file = future_to_video[future]
+                    completed_count += 1
 
-        logger.info("All videos processed in parallel!")
-        logger.info(f"Total images saved: {total_saved_count}")
-        logger.info(f"Output directory: {frames_output_dir}")
+                    try:
+                        saved_count = future.result()
+                        total_saved_count += saved_count
+                        logger.info(
+                            f"Progress: {completed_count}/{len(video_files)} videos completed"
+                        )
+                    except Exception as e:
+                        logger.error(f"Error processing {video_file.name}: {e}")
 
-    except KeyboardInterrupt:
-        logger.warning("\nKeyboardInterrupt received! Cancelling remaining tasks...")
+            logger.info("All videos processed in parallel!")
+            logger.info(f"Total images saved: {total_saved_count}")
+            logger.info(f"Output directory: {frames_output_dir}")
 
-        # Cancel all pending futures
-        for future in future_to_video.keys():
-            future.cancel()
+        except KeyboardInterrupt:
+            logger.warning("\nKeyboardInterrupt received! Stopping all tasks...")
 
-        # Shutdown executor immediately without waiting
-        executor.shutdown(wait=False, cancel_futures=True)
+            # Signal all running threads to stop
+            _stop_event.set()
 
-        logger.info(f"Cancelled. Processed {completed_count}/{len(video_files)} videos")
-        logger.info(f"Total images saved before cancellation: {total_saved_count}")
+            # Cancel all pending futures
+            for future in pending:
+                future.cancel()
 
-        raise  # Re-raise to exit properly
+            # Wait briefly for threads to stop
+            concurrent.futures.wait(pending, timeout=2.0)
 
-    finally:
-        # Ensure executor is properly shut down
-        executor.shutdown(wait=True)
+            logger.info(f"Stopped. Processed {completed_count}/{len(video_files)} videos")
+            logger.info(f"Total images saved before interruption: {total_saved_count}")
+
+            # Clear stop event for next run
+            _stop_event.clear()
+            raise
 
     return total_saved_count

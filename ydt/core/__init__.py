@@ -26,6 +26,8 @@ from .utils import (
     update_label_classes,
 )
 
+IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp", ".webp", ".PNG"}
+
 __all__ = [
     # Format handling
     "BBoxFormat",
@@ -45,4 +47,5 @@ __all__ = [
     "update_label_classes",
     "generate_class_mapping",
     "count_class_distribution",
+    IMAGE_EXTENSIONS,
 ]

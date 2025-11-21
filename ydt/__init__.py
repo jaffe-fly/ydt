@@ -18,7 +18,7 @@ __version__ = "0.2.7"
 # Import main classes and functions for easy access
 from .auto_label import auto_label_dataset
 from .core import BBoxFormat, FormatType, OBBFormat, detect_format
-from .dataset import DatasetSynthesizer, merge_datasets, split_dataset
+from .dataset import DatasetSynthesizer, analyze_dataset, merge_datasets, split_dataset
 from .image import (
     augment_dataset,
     concat_images_horizontally,

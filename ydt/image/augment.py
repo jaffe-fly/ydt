@@ -11,6 +11,7 @@ import cv2
 import numpy as np
 from tqdm import tqdm
 
+from ydt.core import IMAGE_EXTENSIONS
 from ydt.core.formats import FormatType, detect_format
 from ydt.core.logger import get_logger
 
@@ -409,8 +410,7 @@ def augment_dataset(
     # Check if input is a single file or directory
     if dataset_path.is_file():
         # Single file mode
-        supported_extensions = [".jpg", ".jpeg", ".png", ".JPG", ".PNG", ".JPEG"]
-        if dataset_path.suffix not in supported_extensions:
+        if dataset_path.suffix not in IMAGE_EXTENSIONS:
             raise ValueError(f"Unsupported image format: {dataset_path.suffix}")
 
         logger.info(f"Processing single image file: {dataset_path.name}")
@@ -542,7 +542,7 @@ def augment_dataset(
 
         # Get all image files
         image_files = []
-        for ext in [".jpg", ".jpeg", ".png", ".JPG", ".PNG", ".JPEG"]:
+        for ext in IMAGE_EXTENSIONS:
             image_files.extend(list(image_dir.glob(f"*{ext}")))
 
         image_files = sorted(image_files)

@@ -2,13 +2,16 @@
 pytest fixtures and configuration for YDT tests
 """
 
+import os
 import shutil
 import tempfile
 from pathlib import Path
 
-import cv2
-import numpy as np
 import pytest
+
+# Set environment variables before any imports to help with torch DLL on Windows
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+os.environ["OMP_NUM_THREADS"] = "1"
 
 # Test data directory
 TEST_DATA_DIR = Path(__file__).parent / "data"
@@ -25,6 +28,9 @@ def temp_dir():
 @pytest.fixture
 def sample_image(temp_dir):
     """Create a sample test image"""
+    import cv2
+    import numpy as np
+
     image_path = temp_dir / "test_image.jpg"
     # Create a 640x480 RGB test image
     image = np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8)
@@ -35,6 +41,9 @@ def sample_image(temp_dir):
 @pytest.fixture
 def sample_video(temp_dir):
     """Create a sample test video"""
+    import cv2
+    import numpy as np
+
     video_path = temp_dir / "test_video.mp4"
     # Create a simple test video with 10 frames
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
@@ -111,6 +120,9 @@ names: ['class_0', 'class_1']
 @pytest.fixture
 def synthetic_objects_dir(temp_dir):
     """Create directory with synthetic object images"""
+    import cv2
+    import numpy as np
+
     objects_dir = temp_dir / "objects"
     objects_dir.mkdir()
 
@@ -130,6 +142,9 @@ def synthetic_objects_dir(temp_dir):
 @pytest.fixture
 def synthetic_backgrounds_dir(temp_dir):
     """Create directory with background images"""
+    import cv2
+    import numpy as np
+
     backgrounds_dir = temp_dir / "backgrounds"
     backgrounds_dir.mkdir()
 
@@ -140,3 +155,89 @@ def synthetic_backgrounds_dir(temp_dir):
         cv2.imwrite(str(bg_path), image)
 
     return backgrounds_dir
+
+
+@pytest.fixture
+def multi_class_dataset(temp_dir):
+    """Create a dataset with multiple classes for comprehensive testing"""
+    import cv2
+    import numpy as np
+
+    dataset_dir = temp_dir / "multi_class_dataset"
+
+    # Create directory structure
+    for split in ["train", "val"]:
+        (dataset_dir / "images" / split).mkdir(parents=True)
+        (dataset_dir / "labels" / split).mkdir(parents=True)
+
+    # Create training images with different classes
+    for i in range(10):
+        img = np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8)
+        img_path = dataset_dir / "images" / "train" / f"train_{i:03d}.jpg"
+        cv2.imwrite(str(img_path), img)
+
+        # Assign classes in a pattern to ensure distribution
+        class_id = i % 3  # 3 classes
+        label_path = dataset_dir / "labels" / "train" / f"train_{i:03d}.txt"
+        label_path.write_text(f"{class_id} 0.5 0.5 0.2 0.2\n")
+
+    # Create validation images
+    for i in range(3):
+        img = np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8)
+        img_path = dataset_dir / "images" / "val" / f"val_{i:03d}.jpg"
+        cv2.imwrite(str(img_path), img)
+
+        class_id = i % 3
+        label_path = dataset_dir / "labels" / "val" / f"val_{i:03d}.txt"
+        label_path.write_text(f"{class_id} 0.5 0.5 0.2 0.2\n")
+
+    # Create data.yaml
+    data_yaml = dataset_dir / "data.yaml"
+    data_yaml.write_text(
+        """path: .
+train: images/train
+val: images/val
+nc: 3
+names:
+  0: class_a
+  1: class_b
+  2: class_c
+"""
+    )
+
+    return dataset_dir
+
+
+@pytest.fixture
+def obb_dataset(temp_dir):
+    """Create a dataset with OBB format annotations"""
+    import cv2
+    import numpy as np
+
+    dataset_dir = temp_dir / "obb_dataset"
+    (dataset_dir / "images" / "train").mkdir(parents=True)
+    (dataset_dir / "labels" / "train").mkdir(parents=True)
+
+    # Create images with OBB labels
+    for i in range(3):
+        img = np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8)
+        img_path = dataset_dir / "images" / "train" / f"img_{i}.jpg"
+        cv2.imwrite(str(img_path), img)
+
+        # OBB format: class_id x1 y1 x2 y2 x3 y3 x4 y4
+        label_path = dataset_dir / "labels" / "train" / f"img_{i}.txt"
+        label_path.write_text(
+            "0 0.1 0.1 0.3 0.1 0.3 0.3 0.1 0.3\n1 0.5 0.5 0.7 0.5 0.7 0.7 0.5 0.7\n"
+        )
+
+    # Create data.yaml
+    data_yaml = dataset_dir / "data.yaml"
+    data_yaml.write_text(
+        """path: .
+train: images/train
+nc: 2
+names: ['card', 'dice']
+"""
+    )
+
+    return dataset_dir

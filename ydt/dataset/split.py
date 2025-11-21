@@ -12,13 +12,14 @@ from pathlib import Path
 
 import yaml
 
+from ydt.core import IMAGE_EXTENSIONS
 from ydt.core.logger import get_logger
 
 logger = get_logger(__name__)
 
 
 def split_dataset(
-    data_yaml_path: str | Path,
+    input_path: str | Path,
     output_dir: str | Path,
     train_ratio: float = 0.8,
     balance_rotation: bool = False,
@@ -31,7 +32,7 @@ def split_dataset(
     Optionally balances by rotation angles (useful for augmented datasets).
 
     Args:
-        data_yaml_path: Path to dataset YAML file
+        input_path: Path to dataset YAML file or dataset directory (containing data.yaml)
         output_dir: Output directory for split dataset
         train_ratio: Ratio of training data (0.0 to 1.0)
         balance_rotation: If True, balance rotation angles (looks for 'rot_' prefix)
@@ -45,15 +46,37 @@ def split_dataset(
         ValueError: If train_ratio is not in valid range
 
     Examples:
+        >>> # Using YAML file path
         >>> stats = split_dataset(
         ...     "./dataset/data.yaml",
         ...     "./dataset_split",
         ...     train_ratio=0.8
         ... )
         >>> print(f"Train: {stats['train_count']}, Val: {stats['val_count']}")
+
+        >>> # Using dataset directory
+        >>> stats = split_dataset(
+        ...     "./dataset",
+        ...     "./dataset_split",
+        ...     train_ratio=0.8
+        ... )
     """
-    data_yaml_path = Path(data_yaml_path)
     output_dir = Path(output_dir)
+    input_path = Path(input_path)
+
+    # Determine data_yaml_path based on input type
+    if input_path.is_file() and input_path.suffix in [".yaml", ".yml"]:
+        # Input is a YAML file
+        data_yaml_path = input_path
+    elif input_path.is_dir():
+        # Input is a directory, look for data.yaml
+        data_yaml_path = input_path / "data.yaml"
+        if not data_yaml_path.exists():
+            data_yaml_path = input_path / "data.yml"
+        if not data_yaml_path.exists():
+            raise FileNotFoundError(f"No data.yaml or data.yml found in directory: {input_path}")
+    else:
+        raise FileNotFoundError(f"Input path not found: {input_path}")
 
     if not data_yaml_path.exists():
         raise FileNotFoundError(f"YAML file not found: {data_yaml_path}")
@@ -83,8 +106,7 @@ def split_dataset(
         d.mkdir(parents=True, exist_ok=True)
 
     # Get all image files
-    image_extensions = (".jpg", ".png", ".jpeg", ".PNG", ".JPG")
-    image_files = [f.name for f in src_train_dir.iterdir() if f.suffix in image_extensions]
+    image_files = [f.name for f in src_train_dir.iterdir() if f.suffix in IMAGE_EXTENSIONS]
 
     logger.info(f"Found {len(image_files)} images")
 
@@ -227,8 +249,7 @@ def split_dataset(
 
     # Log statistics
     logger.info("Dataset split complete!")
-    logger.info(f"Training set: {train_count} images")
-    logger.info(f"Validation set: {val_count} images")
+    logger.info(f"Training set: {train_count} images, Validation set: {val_count} images")
 
     # Log class distribution
     logger.info("\nClass distribution:")
@@ -318,8 +339,6 @@ def merge_datasets(
     processed_names = {"train": set(), "val": set()}
     stats = {"train_images": 0, "train_labels": 0, "val_images": 0, "val_labels": 0}
 
-    image_extensions = (".jpg", ".png", ".jpeg", ".PNG", ".JPG")
-
     for dataset_dir in dataset_dirs:
         logger.info(f"Processing dataset: {dataset_dir}")
 
@@ -331,7 +350,7 @@ def merge_datasets(
             if src_train_img_dir.exists():
                 logger.info("Merging training set...")
                 train_images = [
-                    f for f in src_train_img_dir.iterdir() if f.suffix in image_extensions
+                    f for f in src_train_img_dir.iterdir() if f.suffix in IMAGE_EXTENSIONS
                 ]
 
                 for img_file in train_images:
@@ -377,7 +396,7 @@ def merge_datasets(
 
             if src_val_img_dir.exists():
                 logger.info("Merging validation set...")
-                val_images = [f for f in src_val_img_dir.iterdir() if f.suffix in image_extensions]
+                val_images = [f for f in src_val_img_dir.iterdir() if f.suffix in IMAGE_EXTENSIONS]
 
                 for img_file in val_images:
                     base_name = img_file.stem

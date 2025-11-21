@@ -8,6 +8,7 @@ import cv2
 import pytest
 
 from ydt.image.augment import augment_dataset, rotate_image_with_labels
+from ydt.image.concat import concat_images_horizontally, concat_images_vertically
 from ydt.image.slice import slice_dataset
 from ydt.image.video import extract_frames
 
@@ -197,3 +198,111 @@ class TestDataAugmentation:
         """Test error handling for nonexistent YAML"""
         with pytest.raises(FileNotFoundError):
             augment_dataset(dataset_path="nonexistent.yaml", output_path=temp_dir / "output")
+
+
+class TestImageConcatenation:
+    """Test image concatenation functionality"""
+
+    def test_concat_horizontal_basic(self, sample_image, temp_dir):
+        """Test basic horizontal concatenation"""
+        # Create a second image
+        image2_path = temp_dir / "test_image2.jpg"
+        import numpy as np
+
+        image2 = np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8)
+        cv2.imwrite(str(image2_path), image2)
+
+        # Concatenate
+        output_path = temp_dir / "concat_h.jpg"
+        result = concat_images_horizontally(sample_image, image2_path, output_path)
+
+        assert result.exists()
+        assert result == output_path
+
+        # Check output dimensions
+        output_img = cv2.imread(str(result))
+        assert output_img.shape[1] == 640 + 640  # Width should be sum
+        assert output_img.shape[0] == 480  # Height should be max
+
+    def test_concat_horizontal_with_directory_output(self, sample_image, temp_dir):
+        """Test horizontal concatenation with directory as output"""
+        # Create a second image
+        image2_path = temp_dir / "test_image2.jpg"
+        import numpy as np
+
+        image2 = np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8)
+        cv2.imwrite(str(image2_path), image2)
+
+        # Concatenate with directory as output
+        output_dir = temp_dir / "output"
+        output_dir.mkdir()
+        result = concat_images_horizontally(sample_image, image2_path, output_dir)
+
+        assert result.exists()
+        assert result.parent == output_dir
+        assert "_concat_" in result.name
+
+    def test_concat_horizontal_different_heights(self, sample_image, temp_dir):
+        """Test horizontal concatenation with different heights"""
+        # Create a taller image
+        image2_path = temp_dir / "test_image2_tall.jpg"
+        import numpy as np
+
+        image2 = np.random.randint(0, 255, (600, 640, 3), dtype=np.uint8)
+        cv2.imwrite(str(image2_path), image2)
+
+        output_path = temp_dir / "concat_h_diff.jpg"
+        result = concat_images_horizontally(
+            sample_image, image2_path, output_path, alignment="center"
+        )
+
+        assert result.exists()
+        output_img = cv2.imread(str(result))
+        assert output_img.shape[0] == 600  # Height should be max
+
+    def test_concat_vertical_basic(self, sample_image, temp_dir):
+        """Test basic vertical concatenation"""
+        # Create a second image
+        image2_path = temp_dir / "test_image2.jpg"
+        import numpy as np
+
+        image2 = np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8)
+        cv2.imwrite(str(image2_path), image2)
+
+        output_path = temp_dir / "concat_v.jpg"
+        result = concat_images_vertically(sample_image, image2_path, output_path)
+
+        assert result.exists()
+        output_img = cv2.imread(str(result))
+        assert output_img.shape[0] == 480 + 480  # Height should be sum
+        assert output_img.shape[1] == 640  # Width should be max
+
+    def test_concat_vertical_with_directory_output(self, sample_image, temp_dir):
+        """Test vertical concatenation with directory as output"""
+        # Create a second image
+        image2_path = temp_dir / "test_image2.jpg"
+        import numpy as np
+
+        image2 = np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8)
+        cv2.imwrite(str(image2_path), image2)
+
+        # Concatenate with directory as output
+        output_dir = temp_dir / "output"
+        output_dir.mkdir()
+        result = concat_images_vertically(sample_image, image2_path, output_dir)
+
+        assert result.exists()
+        assert result.parent == output_dir
+        assert "_concat_v_" in result.name
+
+    def test_concat_nonexistent_image1(self, sample_image, temp_dir):
+        """Test error handling for nonexistent first image"""
+        output_path = temp_dir / "output.jpg"
+        with pytest.raises(FileNotFoundError):
+            concat_images_horizontally("nonexistent1.jpg", sample_image, output_path)
+
+    def test_concat_nonexistent_image2(self, sample_image, temp_dir):
+        """Test error handling for nonexistent second image"""
+        output_path = temp_dir / "output.jpg"
+        with pytest.raises(FileNotFoundError):
+            concat_images_horizontally(sample_image, "nonexistent2.jpg", output_path)

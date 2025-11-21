@@ -102,6 +102,7 @@ class TestCLIInterface:
         assert "split" in result.stdout
         assert "merge" in result.stdout
         assert "synthesize" in result.stdout
+        assert "analyze" in result.stdout
 
     def test_dataset_split_help(self):
         """Test dataset split help"""
@@ -136,6 +137,29 @@ class TestCLIInterface:
         val_dir = output_dir / "images" / "val"
         assert train_dir.exists()
         assert val_dir.exists()
+
+    def test_analyze_help(self):
+        """Test dataset analyze help"""
+        result = self.run_cli_command(["analyze", "--help"])
+        assert result.returncode == 0
+        assert "--input" in result.stdout
+        assert "--split" in result.stdout
+
+    def test_analyze_dataset(self, sample_dataset):
+        """Test dataset analysis command"""
+        result = self.run_cli_command(
+            [
+                "analyze",
+                "-i",
+                str(sample_dataset),
+                "--split",
+                "train",
+            ]
+        )
+
+        assert result.returncode == 0
+        # Check that analysis output is generated
+        assert "Analysis completed" in result.stdout or "数据集分析" in result.stdout
 
     def test_viz_help(self):
         """Test visualization module help"""

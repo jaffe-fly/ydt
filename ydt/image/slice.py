@@ -5,6 +5,7 @@ This module provides functions for slicing large images into smaller tiles,
 particularly useful for object detection tasks with oriented bounding boxes (OBB).
 """
 
+import math
 import os
 import shutil
 from pathlib import Path
@@ -13,6 +14,7 @@ import cv2
 import numpy as np
 from sahi.slicing import slice_image
 
+from ydt.core import IMAGE_EXTENSIONS
 from ydt.core.formats import detect_format
 from ydt.core.logger import get_logger
 
@@ -202,10 +204,9 @@ def slice_dataset(
     # Check if input is a single file or directory
     if input_dir.is_file():
         # Single file mode
-        supported_extensions = [".jpg", ".jpeg", ".png", ".PNG", ".JPG", ".JPEG"]
-        if input_dir.suffix not in supported_extensions:
+        if input_dir.suffix not in IMAGE_EXTENSIONS:
             raise ValueError(
-                f"Unsupported image format: {input_dir.suffix}. Supported formats: {supported_extensions}"
+                f"Unsupported image format: {input_dir.suffix}. Supported formats: {IMAGE_EXTENSIONS}"
             )
 
         logger.info(f"Processing single image file: {input_dir.name}")
@@ -226,13 +227,14 @@ def slice_dataset(
             search_dir = input_dir
 
         # Recursively search for all image files
-        for ext in [".jpg", ".jpeg", ".png", ".PNG", ".JPG", ".JPEG"]:
+        for ext in IMAGE_EXTENSIONS:
             image_files.extend(list(search_dir.rglob(f"*{ext}")))
 
         # In test mode, only process specified number of images
         if test_mode:
             image_files = image_files[:test_count]
 
+    image_files = set(image_files)
     total_files = len(image_files)
     logger.info(f"Found {total_files} image file(s)")
 
@@ -271,9 +273,12 @@ def slice_dataset(
             if vertical_count is None:
                 # Horizontal slicing only
                 logger.info(f"Horizontal slicing: {horizontal_count} slices")
-                total_overlap = crop_width * overlap_ratio_horizontal * (horizontal_count - 1)
-                effective_width = crop_width + total_overlap
-                slice_width = int(effective_width / horizontal_count)
+                # Formula: slice_size = total_size / (count - overlap_ratio * (count - 1))
+                # Use ceil to ensure complete coverage and exact slice count
+                slice_width = math.ceil(
+                    crop_width
+                    / (horizontal_count - overlap_ratio_horizontal * (horizontal_count - 1))
+                )
                 slice_height = crop_height
 
                 # Use SAHI for slicing
@@ -290,15 +295,16 @@ def slice_dataset(
                     f"Grid slicing: {horizontal_count} × {vertical_count} = {horizontal_count * vertical_count} slices"
                 )
 
-                # Calculate horizontal slice parameters
-                total_h_overlap = crop_width * overlap_ratio_horizontal * (horizontal_count - 1)
-                effective_h_width = crop_width + total_h_overlap
-                slice_width = int(effective_h_width / horizontal_count)
-
-                # Calculate vertical slice parameters
-                total_v_overlap = crop_height * overlap_ratio_vertical * (vertical_count - 1)
-                effective_v_height = crop_height + total_v_overlap
-                slice_height = int(effective_v_height / vertical_count)
+                # Calculate slice dimensions to achieve desired grid count
+                # Formula: slice_size = total_size / (count - overlap_ratio * (count - 1))
+                # Use ceil to ensure complete coverage and exact slice count
+                slice_width = math.ceil(
+                    crop_width
+                    / (horizontal_count - overlap_ratio_horizontal * (horizontal_count - 1))
+                )
+                slice_height = math.ceil(
+                    crop_height / (vertical_count - overlap_ratio_vertical * (vertical_count - 1))
+                )
 
                 # Use SAHI for grid slicing
                 slice_result = slice_image(
