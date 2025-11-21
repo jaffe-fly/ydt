@@ -166,9 +166,7 @@ class TestImageConcatenation:
         cv2.imwrite(str(img2_path), img2)
 
         # concat_images_horizontally takes file paths
-        result_path = concat_images_horizontally(
-            str(img1_path), str(img2_path), str(output_path)
-        )
+        result_path = concat_images_horizontally(str(img1_path), str(img2_path), str(output_path))
 
         assert result_path.exists()
         result = cv2.imread(str(result_path))
@@ -187,9 +185,7 @@ class TestImageConcatenation:
         cv2.imwrite(str(img1_path), img1)
         cv2.imwrite(str(img2_path), img2)
 
-        result_path = concat_images_vertically(
-            str(img1_path), str(img2_path), str(output_path)
-        )
+        result_path = concat_images_vertically(str(img1_path), str(img2_path), str(output_path))
 
         assert result_path.exists()
         result = cv2.imread(str(result_path))

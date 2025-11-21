@@ -46,7 +46,6 @@ class TestOBBFormat:
         assert tuple(obb.points[0]) == (0.1, 0.1)
 
 
-
 class TestBBoxFormat:
     """Test BBox format handling"""
 
@@ -58,7 +57,6 @@ class TestBBoxFormat:
         assert bbox.y_center == 0.5
         assert bbox.width == 0.2
         assert bbox.height == 0.1
-
 
 
 class TestUtils:

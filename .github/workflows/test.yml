@@ -45,7 +45,6 @@ jobs:
     - name: Run unit tests
       run: uv run pytest tests/ -v
 
-
     - name: Test CLI installation
       run: |
         uv run ydt --version
