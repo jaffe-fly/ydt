@@ -530,7 +530,7 @@ def extract_labels_only(
         raise FileNotFoundError(f"Image directory not found: {image_dir}")
 
     # Get all image base names (without extension)
-    image_files = [f for f in image_dir.rglob("*") if f.suffix.lower() in IMAGE_EXTENSIONS]
+    image_files = [f for f in image_dir.rglob("*") if f.suffix in IMAGE_EXTENSIONS]
     image_base_names = {img.stem for img in image_files}
 
     logger.info(f"Found {len(image_base_names)} images in {image_dir}")

@@ -192,7 +192,7 @@ def process_images_multi_method(
 
     processed_count = 0
     for img_file in input_path.glob("*"):
-        if img_file.suffix.lower() in IMAGE_EXTENSIONS:
+        if img_file.suffix in IMAGE_EXTENSIONS:
             try:
                 # Process with scaling
                 count = process_single_image_multi_method(
@@ -410,7 +410,7 @@ def resize_directory(
 
     # Handle single file input
     if input_path.is_file():
-        if input_path.suffix.lower() not in IMAGE_EXTENSIONS:
+        if input_path.suffix not in IMAGE_EXTENSIONS:
             logger.error(f"Input file is not a supported image format: {input_path}")
             return 0, 1
 
@@ -491,9 +491,9 @@ def resize_directory(
     # Handle directory input
     # Get all image files
     if recursive:
-        image_files = [f for f in input_path.rglob("*") if f.suffix.lower() in IMAGE_EXTENSIONS]
+        image_files = [f for f in input_path.rglob("*") if f.suffix in IMAGE_EXTENSIONS]
     else:
-        image_files = [f for f in input_path.glob("*") if f.suffix.lower() in IMAGE_EXTENSIONS]
+        image_files = [f for f in input_path.glob("*") if f.suffix in IMAGE_EXTENSIONS]
 
     total_images = len(image_files)
 
@@ -703,7 +703,7 @@ def resize_dataset(
             continue
 
         # Get all image files
-        image_files = [f for f in src_img_dir.iterdir() if f.suffix.lower() in IMAGE_EXTENSIONS]
+        image_files = [f for f in src_img_dir.iterdir() if f.suffix in IMAGE_EXTENSIONS]
 
         if len(image_files) == 0:
             logger.warning(f"No images found in {src_img_dir}")

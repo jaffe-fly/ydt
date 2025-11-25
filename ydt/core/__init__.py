@@ -47,5 +47,5 @@ __all__ = [
     "update_label_classes",
     "generate_class_mapping",
     "count_class_distribution",
-    IMAGE_EXTENSIONS,
+    "IMAGE_EXTENSIONS",
 ]

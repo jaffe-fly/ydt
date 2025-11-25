@@ -72,7 +72,7 @@ def extract_frames(
 
     if video_path.is_file():
         # Single file
-        if video_path.suffix.lower() in supported_formats:
+        if video_path.suffix in supported_formats:
             video_files.append(video_path)
         else:
             raise ValueError(f"Unsupported video format: {video_path.suffix}")
@@ -316,7 +316,7 @@ def extract_frames_parallel(
 
     if video_path.is_file():
         # Single file
-        if video_path.suffix.lower() in supported_formats:
+        if video_path.suffix in supported_formats:
             video_files.append(video_path)
         else:
             raise ValueError(f"Unsupported video format: {video_path.suffix}")

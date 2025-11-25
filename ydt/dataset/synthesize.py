@@ -191,7 +191,7 @@ class DatasetSynthesizer:
         require_class_validation = bool(self.class_names)  # Validate if class names are provided
 
         for img_path in self.target_dir.rglob("*"):
-            if img_path.suffix.lower() not in IMAGE_EXTENSIONS:
+            if img_path.suffix not in IMAGE_EXTENSIONS:
                 continue
 
             img = cv2.imread(str(img_path), cv2.IMREAD_UNCHANGED)
@@ -273,7 +273,7 @@ class DatasetSynthesizer:
         backgrounds: list[np.ndarray] = []
 
         for img_path in self.background_dir.rglob("*"):
-            if img_path.suffix.lower() not in IMAGE_EXTENSIONS:
+            if img_path.suffix not in IMAGE_EXTENSIONS:
                 continue
 
             img = cv2.imread(str(img_path))

@@ -250,7 +250,7 @@ def analyze_dataset(
         if not img_dir.exists():
             continue
 
-        image_files = [f for f in img_dir.iterdir() if f.suffix.lower() in IMAGE_EXTENSIONS]
+        image_files = [f for f in img_dir.iterdir() if f.suffix in IMAGE_EXTENSIONS]
         image_counts[s] = len(image_files)
         total_images += len(image_files)
 
