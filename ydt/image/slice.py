@@ -380,7 +380,7 @@ def slice_dataset(
 
                     if label_path.exists():
                         # If original label file exists, convert coordinates
-                        with open(label_path) as f:
+                        with open(label_path, encoding="utf-8") as f:
                             original_labels = f.readlines()
 
                         # Convert label coordinates
@@ -402,11 +402,11 @@ def slice_dataset(
                                 new_labels.append(new_label)
 
                         # Save converted labels
-                        with open(label_save_path, "w") as f:
+                        with open(label_save_path, "w", encoding="utf-8") as f:
                             f.writelines(new_labels)
                     else:
                         # If no original label file, create empty file
-                        with open(label_save_path, "w") as f:
+                        with open(label_save_path, "w", encoding="utf-8") as f:
                             pass
 
                     # Collect image paths (relative to output directory)

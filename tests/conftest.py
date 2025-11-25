@@ -69,7 +69,7 @@ def sample_obb_labels(temp_dir, sample_image):
         "0 0.1 0.1 0.3 0.1 0.3 0.3 0.1 0.3",  # Square
         "1 0.5 0.5 0.7 0.5 0.7 0.7 0.5 0.7",  # Square
     ]
-    label_path.write_text("\n".join(labels))
+    label_path.write_text("\n".join(labels), encoding="utf-8")
     return label_path
 
 
@@ -82,7 +82,7 @@ def sample_bbox_labels(temp_dir, sample_image):
         "0 0.2 0.2 0.2 0.2",  # Square at (0.2, 0.2) with size 0.2
         "1 0.6 0.6 0.2 0.2",  # Square at (0.6, 0.6) with size 0.2
     ]
-    label_path.write_text("\n".join(labels))
+    label_path.write_text("\n".join(labels), encoding="utf-8")
     return label_path
 
 
@@ -111,7 +111,8 @@ val: images/val
 
 nc: 2
 names: ['class_0', 'class_1']
-"""
+""",
+        encoding="utf-8",
     )
 
     return dataset_dir

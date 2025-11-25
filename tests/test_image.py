@@ -79,7 +79,7 @@ class TestImageSlicing:
         cv2.imwrite(str(input_dir / "images" / "train" / "test.jpg"), img)
 
         label_path = input_dir / "labels" / "train" / "test.txt"
-        label_path.write_text("0 0.5 0.5 0.2 0.2\n")
+        label_path.write_text("0 0.5 0.5 0.2 0.2\n", encoding="utf-8")
 
         output_dir = temp_dir / "sliced"
 
@@ -111,7 +111,7 @@ class TestDataAugmentation:
 
         # Create label
         label_path = input_dir / "labels" / "train" / "img.txt"
-        label_path.write_text("0 0.5 0.5 0.2 0.2\n")
+        label_path.write_text("0 0.5 0.5 0.2 0.2\n", encoding="utf-8")
 
         output_dir = temp_dir / "augmented"
 
@@ -135,7 +135,7 @@ class TestDataAugmentation:
         cv2.imwrite(str(input_dir / "images" / "train" / "img.jpg"), img)
 
         label_path = input_dir / "labels" / "train" / "img.txt"
-        label_path.write_text("0 0.5 0.5 0.2 0.2\n")
+        label_path.write_text("0 0.5 0.5 0.2 0.2\n", encoding="utf-8")
 
         output_dir = temp_dir / "augmented"
 

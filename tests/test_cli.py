@@ -12,7 +12,15 @@ class TestCLIInterface:
     def run_cli_command(self, args, cwd=None):
         """Helper to run CLI command"""
         cmd = [sys.executable, "-m", "ydt.cli.main"] + args
-        result = subprocess.run(cmd, capture_output=True, text=True, cwd=cwd, timeout=30)
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            cwd=cwd,
+            timeout=30,
+        )
         return result
 
     def test_cli_version(self):

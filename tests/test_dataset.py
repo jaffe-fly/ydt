@@ -73,11 +73,11 @@ class TestDatasetMerge:
             cv2.imwrite(str(img_path), img)
 
             label_path = dataset_dir / "labels" / "train" / f"img{i}.txt"
-            label_path.write_text(f"{i} 0.5 0.5 0.2 0.2\n")
+            label_path.write_text(f"{i} 0.5 0.5 0.2 0.2\n", encoding="utf-8")
 
             # Create data.yaml
             data_yaml = dataset_dir / "data.yaml"
-            data_yaml.write_text(yaml.dump({"names": [f"class{i}"], "nc": 1}))
+            data_yaml.write_text(yaml.dump({"names": [f"class{i}"], "nc": 1}), encoding="utf-8")
             datasets.append(str(dataset_dir))
 
         output_dir = temp_dir / "merged"
@@ -105,10 +105,10 @@ class TestDatasetMerge:
             cv2.imwrite(str(img_path), img)
 
             label_path = dataset_dir / "labels" / "train" / "duplicate.txt"
-            label_path.write_text("0 0.5 0.5 0.2 0.2\n")
+            label_path.write_text("0 0.5 0.5 0.2 0.2\n", encoding="utf-8")
 
             data_yaml = dataset_dir / "data.yaml"
-            data_yaml.write_text(yaml.dump({"names": ["class0"], "nc": 1}))
+            data_yaml.write_text(yaml.dump({"names": ["class0"], "nc": 1}), encoding="utf-8")
             datasets.append(str(dataset_dir))
 
         output_dir = temp_dir / "merged_dup"
@@ -205,10 +205,10 @@ class TestCountLabels:
             cv2.imwrite(str(dataset_dir / "images" / split / "img.jpg"), img)
 
             label_path = dataset_dir / "labels" / split / "img.txt"
-            label_path.write_text("0 0.5 0.5 0.2 0.2\n1 0.3 0.3 0.1 0.1\n")
+            label_path.write_text("0 0.5 0.5 0.2 0.2\n1 0.3 0.3 0.1 0.1\n", encoding="utf-8")
 
         data_yaml = dataset_dir / "data.yaml"
-        data_yaml.write_text(yaml.dump({"names": ["class0", "class1"], "nc": 2}))
+        data_yaml.write_text(yaml.dump({"names": ["class0", "class1"], "nc": 2}), encoding="utf-8")
 
         counts = count_labels(
             dataset_path=str(dataset_dir),
@@ -246,10 +246,10 @@ class TestAnalyzeDataset:
         cv2.imwrite(str(dataset_dir / "images" / "train" / "img.jpg"), img)
 
         label_path = dataset_dir / "labels" / "train" / "img.txt"
-        label_path.write_text("0 0.5 0.5 0.3 0.3 0.4 0.4 0.6 0.6\n")
+        label_path.write_text("0 0.5 0.5 0.3 0.3 0.4 0.4 0.6 0.6\n", encoding="utf-8")
 
         data_yaml = dataset_dir / "data.yaml"
-        data_yaml.write_text(yaml.dump({"names": ["class0"], "nc": 1}))
+        data_yaml.write_text(yaml.dump({"names": ["class0"], "nc": 1}), encoding="utf-8")
 
         stats = analyze_dataset(
             dataset_path=str(dataset_dir),

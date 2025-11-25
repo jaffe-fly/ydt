@@ -29,7 +29,7 @@ class TestFormatDetection:
     def test_detect_format_empty_file(self, temp_dir):
         """Test format detection with empty file"""
         empty_file = temp_dir / "empty.txt"
-        empty_file.write_text("")
+        empty_file.write_text("", encoding="utf-8")
         # Should default to bbox for empty files
         format_type = detect_format(empty_file)
         assert format_type == "bbox"
