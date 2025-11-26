@@ -18,11 +18,12 @@
 - 旋转增强with自动 OBB 坐标变换
 - 多方法 resize（scale & crop），支持自定义插值（linear/lanczos4），支持单图和数据集
 - 基于坐标的精确裁剪
+- 支持从模型推理或数据集标签裁剪对象，支持padding和尺寸过滤
 - 视频切帧支持并行处理
 - 智能训练/验证集划分，类别平衡
 - 多数据集合并
 - 按类别 ID 提取数据，支持标签过滤和 ID 重映射
-- 合成数据集生成，可配置每张图物体数量和旋转范围
+- 合成数据集生成，可配置每张图物体数量、旋转范围和类别均衡采样
 - YOLO 自动标注，支持 BBox/OBB 格式
 
 **可视化**
@@ -48,22 +49,23 @@ usage: ydt [-h] [--version] [-v]
 YOLO Dataset Tools - Process and manage YOLO format datasets
 
 positional arguments:
-  {slice,augment,video,crop-coords,resize,concat,split,merge,extract,synthesize,auto-label,analyze,visualize,viz-letterbox}
+  {slice,augment,video,crop-coords,crop,resize,concat,split,merge,extract,synthesize,auto-label,analyze,visualize,viz-letterbox}
                         Available commands
-    slice               Slice large images into tiles
-    augment             Augment dataset with rotations
-    video               Extract frames from videos
-    crop-coords         Crop images by coordinates
-    resize              Resize images or YOLO dataset
-    concat              Concatenate two images
-    split               Split dataset into train/val
-    merge               Merge multiple datasets
-    extract             Extract classes, images, or labels
-    synthesize          Generate synthetic dataset
-    auto-label          Auto-label images using YOLO model
-    analyze             Analyze dataset statistics
-    visualize           Visualize YOLO dataset interactively
-    viz-letterbox       Visualize letterbox transformation
+    slice               切片大图为小块
+    augment             数据增强（旋转）
+    video               从视频提取帧
+    crop-coords         按坐标裁剪图片
+    crop                从模型或数据集标签裁剪对象
+    resize              调整图片或YOLO数据集大小
+    concat              拼接两张图片
+    split               划分训练/验证集
+    merge               合并多个数据集
+    extract             提取类别、图片或标签
+    synthesize          生成合成数据集
+    auto-label          使用YOLO模型自动标注
+    analyze             分析数据集统计信息
+    visualize           交互式可视化YOLO数据集
+    viz-letterbox       可视化letterbox变换
 
 options:
   -h, --help            show this help message and exit

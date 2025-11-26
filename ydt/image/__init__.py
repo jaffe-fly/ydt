@@ -6,12 +6,14 @@ Provides image manipulation operations:
 - Slicing and tiling
 - Resizing and cropping
 - Coordinate-based cropping
+- Object cropping (from model or dataset)
 - Concatenation
 - Video frame extraction for dataset creation
 """
 
 from .augment import augment_dataset, rotate_image_with_labels
 from .concat import concat_images_horizontally, concat_images_vertically
+from .crop import crop_from_dataset, crop_with_model
 from .resize import (
     crop_directory_by_coords,
     crop_image_by_coords,
@@ -35,4 +37,6 @@ __all__ = [
     "resize_directory",
     "concat_images_horizontally",
     "concat_images_vertically",
+    "crop_with_model",
+    "crop_from_dataset",
 ]

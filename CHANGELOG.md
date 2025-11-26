@@ -6,6 +6,77 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.4.0] - 2025-11-26
+
+### Added
+- **New Crop Command**
+  - Added `crop` command for extracting objects from images
+  - Two modes supported:
+    - `model`: Use YOLO model inference to detect and crop objects
+    - `dataset`: Use existing label files to crop objects from dataset
+  - Comprehensive options:
+    - `--classes`: Filter specific class IDs to crop
+    - `--padding`: Add padding pixels around crops (default: 0)
+    - `--min-size` / `--max-size`: Filter objects by dimension (width or height)
+    - `--conf` / `--iou`: Confidence and NMS thresholds for model mode
+    - `--obb`: Support OBB format detection in model mode
+    - `--split`: Process train/val/both splits in dataset mode
+    - `--device`: GPU device selection for model inference
+  - Python API: `crop_with_model()`, `crop_from_dataset()`
+  - New file: `ydt/image/crop.py`
+  - Updated `ydt/image/__init__.py` to export new crop functions
+
+- **Dataset Synthesis Enhancements**
+  - Added `--balanced-sampling` parameter for balanced class distribution
+    - Ensures each class appears evenly across synthesized images
+    - Each image contains objects from different classes (configurable)
+    - Requires fixed `objects_per_image` value (no range allowed)
+    - Example: With 4 classes and `--objects-per-image 2`, classes cycle evenly
+  - Auto-detection of class inference mode:
+    - Folder name mode: Infers class from parent directory name
+    - Filename mode: Infers class from image filename (original behavior)
+    - Automatic detection based on directory structure
+  - Improved target annotation with mask polygons:
+    - Uses mask contours to create accurate OBB polygons instead of full bounding rectangles
+    - Extracts main contour from mask and fits minimum area rectangle
+    - Normalizes polygon points to 0-1 range for YOLO format
+    - Falls back to full rectangle if mask unavailable or invalid
+
+### Changed
+- **Dataset Synthesis Improvements**
+  - Refactored synthesis logic into two methods:
+    - `_synthesize_dataset_random()`: Original random sampling (default)
+    - `_synthesize_dataset_balanced()`: New balanced sampling mode
+  - Enhanced logging for balanced mode:
+    - Reports class distribution plan before synthesis
+    - Shows per-class instance counts
+    - Displays sampling strategy details
+  - Improved annotation transformation:
+    - Now handles arbitrary polygon points instead of just rectangles
+    - Applies rotation and scaling to actual mask-derived polygons
+  - Better error messages:
+    - Clear validation for balanced mode requirements
+    - Helpful examples in error messages for class name matching
+
+### Technical Details
+- **Crop Implementation**
+  - Model mode: Uses Ultralytics YOLO for inference, supports both BBox and OBB detection
+  - Dataset mode: Reads label files and crops based on existing annotations
+  - Both modes support class filtering, size filtering, and padding
+  - Returns detailed statistics: `total_images`, `total_cropped`, per-class counts
+  - Handles coordinate transformations for both normalized and pixel coordinates
+  - CLI integration in `ydt/cli/main.py` with comprehensive parameter handling
+
+- **Synthesis Implementation**
+  - New method `_detect_class_inference_mode()` checks directory structure
+  - New method `_create_target_annotations()` extracts mask polygons using OpenCV
+  - New method `_synthesize_single_image_balanced()` for controlled class placement
+  - Modified `_resize_and_rotate_target()` to handle polygon transformations
+  - Balanced sampling creates pre-planned class distribution before synthesis
+  - Class usage tracking ensures even distribution across generated images
+  - Modified `ydt/dataset/synthesize.py` with 300+ lines of new/modified code
+
+
 ## [0.3.0] - 2025-11-20
 
 ### Added

@@ -16,11 +16,12 @@
 - SAHI-powered smart slicing for large images with horizontal/grid modes and configurable overlap
 - Resize (scale & crop) with custom interpolation (linear/lanczos4),image or yolo dataset
 - Coordinate-based precision cropping
+- Object cropping from model inference or dataset labels with padding and size filters
 - Video frame extraction with parallel processing support
 - Smart train/val split with class balancing
 - Multi-dataset merging
 - Dataset extraction by class IDs with optional label filtering and ID remapping
-- Synthetic dataset generation with configurable objects per image and rotation ranges
+- Synthetic dataset generation with configurable objects per image, rotation ranges, and balanced class sampling
 - YOLO auto-labeling with BBox/OBB format support
 - Interactive dataset browser with keyboard controls (n/p/q)
 
@@ -43,12 +44,13 @@ usage: ydt [-h] [--version] [-v]
 YOLO Dataset Tools - Process and manage YOLO format datasets
 
 positional arguments:
-  {slice,augment,video,crop-coords,resize,concat,split,merge,extract,synthesize,auto-label,analyze,visualize,viz-letterbox}
+  {slice,augment,video,crop-coords,crop,resize,concat,split,merge,extract,synthesize,auto-label,analyze,visualize,viz-letterbox}
                         Available commands
     slice               Slice large images into tiles
     augment             Augment dataset with rotations
     video               Extract frames from videos
     crop-coords         Crop images by coordinates
+    crop                Crop objects from images using model or dataset labels
     resize              Resize images or YOLO dataset
     concat              Concatenate two images
     split               Split dataset into train/val

@@ -10,7 +10,7 @@ import sys
 
 os.environ.setdefault("NO_ALBUMENTATIONS_UPDATE", "1")
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 
 
 def create_parser():
@@ -93,6 +93,48 @@ def create_parser():
     )
     crop_coords_p.add_argument(
         "--no-recursive", action="store_true", help="Don't search subdirectories"
+    )
+
+    # crop - Crop objects from images
+    crop_p = subparsers.add_parser(
+        "crop", help="Crop objects from images using model or dataset labels"
+    )
+    crop_p.add_argument(
+        "-i", "--input", required=True, help="Input image/directory or dataset path"
+    )
+    crop_p.add_argument("-o", "--output", required=True, help="Output directory")
+    crop_p.add_argument(
+        "--mode",
+        choices=["model", "dataset"],
+        required=True,
+        help="Crop mode: model (use YOLO model) or dataset (use label files)",
+    )
+    crop_p.add_argument("--model", help="YOLO model path (required for model mode)")
+    crop_p.add_argument(
+        "--split",
+        choices=["train", "val", "both"],
+        default="train",
+        help="Dataset split to process (dataset mode only, default: train)",
+    )
+    crop_p.add_argument("--classes", type=int, nargs="+", help="Class IDs to crop (default: all)")
+    crop_p.add_argument(
+        "--conf", type=float, default=0.5, help="Confidence threshold (model mode, default: 0.5)"
+    )
+    crop_p.add_argument(
+        "--iou", type=float, default=0.5, help="NMS IOU threshold (model mode, default: 0.5)"
+    )
+    crop_p.add_argument("--obb", action="store_true", help="Use OBB format (model mode)")
+    crop_p.add_argument(
+        "--padding", type=int, default=0, help="Padding pixels around crop (default: 0)"
+    )
+    crop_p.add_argument(
+        "--min-size", type=int, help="Minimum object dimension (width or height) in pixels"
+    )
+    crop_p.add_argument(
+        "--max-size", type=int, help="Maximum object dimension (width or height) in pixels"
+    )
+    crop_p.add_argument(
+        "--device", type=int, default=0, help="Device for inference (model mode, default: 0)"
     )
 
     # resize - Resize images or dataset
@@ -255,6 +297,11 @@ def create_parser():
         default="obb",
         help="Annotation format: obb (Oriented Bounding Box) or hbb (Horizontal Bounding Box) (default: obb)",
     )
+    synth_p.add_argument(
+        "--balanced-sampling",
+        action="store_true",
+        help="Enable balanced sampling mode: distribute class usage evenly across synthesized images",
+    )
 
     # auto-label - Auto-label images using YOLO model
     auto_label_p = subparsers.add_parser("auto-label", help="Auto-label images using YOLO model")
@@ -398,6 +445,59 @@ def main():
                 recursive=not args.no_recursive,
             )
             logger.info(f"Cropped {success_count} images successfully, {failure_count} failed")
+
+        elif args.command == "crop":
+            if args.mode == "model":
+                # Model inference mode
+                if not args.model:
+                    logger.error("--model is required for model mode")
+                    return 1
+
+                from ydt.image import crop_with_model
+
+                logger.info(f"Cropping objects using model: {args.model}")
+                logger.info(f"Input: {args.input}")
+                logger.info(f"Output: {args.output}")
+
+                result = crop_with_model(
+                    source=args.input,
+                    model_path=args.model,
+                    output_dir=args.output,
+                    classes=args.classes,
+                    conf=args.conf,
+                    iou=args.iou,
+                    obb=args.obb,
+                    padding=args.padding,
+                    min_size=args.min_size,
+                    max_size=args.max_size,
+                    device=args.device,
+                )
+
+                logger.info(
+                    f"Successfully cropped {result['total_cropped']} objects from {result['total_images']} images"
+                )
+
+            elif args.mode == "dataset":
+                # Dataset mode
+                from ydt.image import crop_from_dataset
+
+                logger.info(f"Cropping objects from dataset: {args.input}")
+                logger.info(f"Split: {args.split}")
+                logger.info(f"Output: {args.output}")
+
+                result = crop_from_dataset(
+                    dataset_path=args.input,
+                    output_dir=args.output,
+                    split=args.split,
+                    classes=args.classes,
+                    padding=args.padding,
+                    min_size=args.min_size,
+                    max_size=args.max_size,
+                )
+
+                logger.info(
+                    f"Successfully cropped {result['total_cropped']} objects from {result['total_images']} images"
+                )
 
         elif args.command == "resize":
             from pathlib import Path
@@ -580,8 +680,13 @@ def main():
                 data_yaml_path=args.data_yaml if hasattr(args, "data_yaml") else None,
                 rotation_range=rotation_range,
                 annotation_format=args.format,
+                balanced_sampling=args.balanced_sampling,
             )
             logger.info(f"Annotation format: {args.format.upper()}")
+            if args.balanced_sampling:
+                logger.info(
+                    "Balanced sampling mode: classes will be cycled evenly across generated images"
+                )
             synthesizer.synthesize_dataset(num_images=args.num)
 
         elif args.command == "auto-label":

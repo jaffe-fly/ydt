@@ -58,6 +58,7 @@ class DatasetSynthesizer:
         data_yaml_path: str | Path | None = None,
         rotation_range: tuple[float, float] | None = None,
         annotation_format: str = "obb",
+        balanced_sampling: bool = False,
     ):
         """
         Initialize dataset synthesizer.
@@ -78,6 +79,12 @@ class DatasetSynthesizer:
             data_yaml_path: Optional path to data.yaml for class name validation
             rotation_range: Optional tuple (min_angle, max_angle) for rotation limits in degrees
             annotation_format: Annotation format - "obb" (Oriented Bounding Box) or "hbb" (Horizontal Bounding Box)
+            balanced_sampling: If True, enforce even class usage across synthesized images
+
+        Note:
+            Class inference mode is automatically detected:
+            - If target_dir contains subdirectories with images → infer class from folder names
+            - If target_dir contains images directly → infer class from filenames
 
         Raises:
             RuntimeError: If no valid target or background images found
@@ -92,6 +99,7 @@ class DatasetSynthesizer:
         self.target_area_ratio = target_area_ratio
         self.split_mode = split_mode
         self.annotation_format = annotation_format.lower()
+        self.balanced_sampling = balanced_sampling
 
         if self.annotation_format not in ["obb", "hbb"]:
             raise ValueError(
@@ -151,12 +159,35 @@ class DatasetSynthesizer:
             self.min_objects_per_image = min_objects_per_image
             self.max_objects_per_image = max_objects_per_image
 
+        if self.balanced_sampling and self.min_objects_per_image != self.max_objects_per_image:
+            raise ValueError(
+                "balanced_sampling requires a fixed objects_per_image value. Provide a single integer."
+            )
+
         self._create_output_directories()
+
+        # Auto-detect class inference mode
+        self.class_from_folder = self._detect_class_inference_mode()
+
         self.target_data = self._load_target_data()
         self.background_images = self._load_background_images()
 
         logger.info(f"Loaded {len(self.target_data)} target samples")
         logger.info(f"Loaded {len(self.background_images)} background images")
+
+        # Organize targets by class for balanced sampling
+        self.targets_by_class: dict[int, list[dict]] = {}
+        for target in self.target_data:
+            class_id = target["annotations"][0]["class_id"]
+            if class_id not in self.targets_by_class:
+                self.targets_by_class[class_id] = []
+            self.targets_by_class[class_id].append(target)
+
+        if self.balanced_sampling:
+            logger.info(f"Balanced sampling enabled: {len(self.targets_by_class)} classes")
+            for class_id, targets in self.targets_by_class.items():
+                class_name = self.class_names.get(class_id, f"class_{class_id}")
+                logger.info(f"  Class {class_id} ({class_name}): {len(targets)} target images")
 
     def _create_output_directories(self) -> None:
         """Create output directory structure"""
@@ -174,6 +205,33 @@ class DatasetSynthesizer:
                 self.output_dir / "labels" / "val",
             ]:
                 sub.mkdir(parents=True, exist_ok=True)
+
+    def _detect_class_inference_mode(self) -> bool:
+        """
+        Automatically detect whether to infer class from folder name or filename.
+
+        Returns:
+            True if should infer from folder name, False if from filename
+        """
+        # Check if there are subdirectories with images
+        has_subdirs_with_images = False
+
+        for item in self.target_dir.iterdir():
+            if item.is_dir():
+                # Check if this directory contains any images
+                for img_file in item.iterdir():
+                    if img_file.is_file() and img_file.suffix in IMAGE_EXTENSIONS:
+                        has_subdirs_with_images = True
+                        break
+                if has_subdirs_with_images:
+                    break
+
+        if has_subdirs_with_images:
+            logger.info("Auto-detected: using folder names for class inference")
+            return True
+        else:
+            logger.info("Auto-detected: using filenames for class inference")
+            return False
 
     def _load_target_data(self) -> list[dict]:
         """
@@ -214,40 +272,56 @@ class DatasetSynthesizer:
             if mask is not None and np.count_nonzero(mask) == 0:
                 mask = None
 
-            # Infer class from filename
+            # Infer class from folder name or filename
             class_id = 0
             matched_class_name = None
-            stem_lower = img_path.stem.lower()
 
-            for name in class_name_list:
-                if name.lower() in stem_lower:
-                    class_id = self.name_to_id[name]
-                    matched_class_name = name
-                    break
+            if self.class_from_folder:
+                # Use parent folder name for class inference
+                folder_name = img_path.parent.name.lower()
+                for name in class_name_list:
+                    if name.lower() in folder_name:
+                        class_id = self.name_to_id[name]
+                        matched_class_name = name
+                        break
+            else:
+                # Use filename for class inference (original behavior)
+                stem_lower = img_path.stem.lower()
+                for name in class_name_list:
+                    if name.lower() in stem_lower:
+                        class_id = self.name_to_id[name]
+                        matched_class_name = name
+                        break
 
-            # Validate that filename contains a class name if class names are provided
+            # Validate that filename/folder contains a class name if class names are provided
             if require_class_validation and matched_class_name is None:
                 available_names = ", ".join([f"'{name}'" for name in class_name_list])
-                raise ValueError(
-                    f"Target filename '{img_path.name}' does not contain any class name from data.yaml.\n"
-                    f"Available class names: {available_names}\n"
-                    f"Example: For class name 'bn', filename should be 'bn_back.jpg' or 'front_bn.png'"
-                )
+                if self.class_from_folder:
+                    raise ValueError(
+                        f"Target folder '{img_path.parent.name}' does not contain any class name from data.yaml.\n"
+                        f"Available class names: {available_names}\n"
+                        f"Example: For class name 'mj_1D', folder should be named 'mj_1D' or 'cards_mj_1D'"
+                    )
+                else:
+                    raise ValueError(
+                        f"Target filename '{img_path.name}' does not contain any class name from data.yaml.\n"
+                        f"Available class names: {available_names}\n"
+                        f"Example: For class name 'bn', filename should be 'bn_back.jpg' or 'front_bn.png'"
+                    )
 
             if matched_class_name:
                 logger.info(
                     f"Matched '{img_path.name}' to class '{matched_class_name}' (ID: {class_id})"
                 )
 
+            annotations = self._create_target_annotations(
+                class_id=class_id, width=img.shape[1], height=img.shape[0], mask=mask
+            )
+
             targets.append(
                 {
                     "image": img,
-                    "annotations": [
-                        {
-                            "class_id": class_id,
-                            "points": [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)],
-                        }
-                    ],
+                    "annotations": annotations,
                     "filename": img_path.name,
                     "height": img.shape[0],
                     "width": img.shape[1],
@@ -259,6 +333,44 @@ class DatasetSynthesizer:
             raise RuntimeError(f"No valid target images found in {self.target_dir}")
 
         return targets
+
+    def _create_target_annotations(
+        self, class_id: int, width: int, height: int, mask: np.ndarray | None
+    ) -> list[dict]:
+        """Create annotation polygons using mask when available."""
+        default_annotation = [
+            {
+                "class_id": class_id,
+                "points": [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)],
+            }
+        ]
+
+        if mask is None:
+            return default_annotation
+
+        if mask.ndim == 3:
+            mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
+
+        mask_bin = np.where(mask > 0, 255, 0).astype(np.uint8)
+        contours_info = cv2.findContours(mask_bin, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contours = contours_info[0] if len(contours_info) == 2 else contours_info[1]
+        if not contours:
+            return default_annotation
+
+        main_contour = max(contours, key=cv2.contourArea)
+        if cv2.contourArea(main_contour) < 5.0:
+            return default_annotation
+
+        rect = cv2.minAreaRect(main_contour)
+        box = cv2.boxPoints(rect)
+
+        norm_points: list[tuple[float, float]] = []
+        for x, y in box:
+            nx = float(np.clip(x / max(1, width), 0.0, 1.0))
+            ny = float(np.clip(y / max(1, height), 0.0, 1.0))
+            norm_points.append((nx, ny))
+
+        return [{"class_id": class_id, "points": norm_points}]
 
     def _load_background_images(self) -> list[np.ndarray]:
         """
@@ -494,17 +606,15 @@ class DatasetSynthesizer:
             total_scale *= area_scale
 
         for ann in target_annotations:
+            if not ann.get("points"):
+                continue
+
             pts = np.array(
-                [
-                    [0.0 * new_w, 0.0 * new_h],
-                    [1.0 * new_w, 0.0 * new_h],
-                    [1.0 * new_w, 1.0 * new_h],
-                    [0.0 * new_w, 1.0 * new_h],
-                ],
+                [(px * new_w, py * new_h) for px, py in ann["points"]],
                 dtype=np.float32,
             )
 
-            pts_h = np.hstack([pts, np.ones((4, 1), dtype=np.float32)])
+            pts_h = np.hstack([pts, np.ones((pts.shape[0], 1), dtype=np.float32)])
             pts_rot = (pts_h @ transform.T).astype(np.float32)
 
             if total_scale != 1.0:
@@ -689,6 +799,78 @@ class DatasetSynthesizer:
 
         return synthesized, placed_objects
 
+    def _synthesize_single_image_balanced(
+        self, background: np.ndarray, class_ids: list[int]
+    ) -> tuple[np.ndarray, list[dict]]:
+        """
+        Synthesize a single image with one target from each specified class.
+
+        Args:
+            background: Background image
+            class_ids: List of class IDs to include (one target per class)
+
+        Returns:
+            Tuple of (synthesized_image, placed_objects)
+        """
+        bg_h, bg_w = background.shape[:2]
+        synthesized = background.copy()
+
+        # Select one random target from each class
+        selected_targets: list[dict] = []
+        for class_id in class_ids:
+            if class_id in self.targets_by_class and self.targets_by_class[class_id]:
+                target = random.choice(self.targets_by_class[class_id])
+                selected_targets.append(target)
+            else:
+                logger.warning(f"No targets available for class {class_id}, skipping")
+
+        if not selected_targets:
+            return synthesized, []
+
+        # Calculate minimum short side
+        candidate_shorts: list[int] = []
+        for target in selected_targets:
+            candidate_shorts.append(int(max(1, min(target["height"], target["width"]))))
+        desired_short_side = int(min(candidate_shorts)) if candidate_shorts else 1
+
+        # Place objects
+        placed_objects: list[dict] = []
+        attempts = 0
+        max_attempts = max(200, len(selected_targets) * 60)
+
+        # Create a list to track which targets we still need to place
+        targets_to_place = list(range(len(selected_targets)))
+        random.shuffle(targets_to_place)
+
+        while targets_to_place and attempts < max_attempts:
+            attempts += 1
+            # Try to place targets in order, cycling through remaining targets
+            idx = targets_to_place[attempts % len(targets_to_place)]
+            target_data = selected_targets[idx]
+
+            resized_img, resized_ann, rotated_mask = self._resize_and_rotate_target(
+                target_data["image"],
+                target_data["annotations"],
+                bg_w,
+                bg_h,
+                target_data.get("mask"),
+                desired_short_side=desired_short_side,
+            )
+
+            placement = self._place_target_on_background(
+                synthesized,
+                resized_img,
+                resized_ann,
+                placed_objects,
+                rotated_mask,
+            )
+
+            if placement is not None:
+                placed_objects.append(placement)
+                targets_to_place.remove(idx)
+
+        return synthesized, placed_objects
+
     def _generate_yolo_annotations(self, placed_objects: list[dict]) -> list[str]:
         """Generate YOLO format annotations (OBB or HBB)"""
         annotations: list[str] = []
@@ -743,7 +925,7 @@ class DatasetSynthesizer:
         Synthesize complete dataset with train/val splits.
 
         Args:
-            num_images: Total number of images to generate
+            num_images: Total number of images to generate. Used in both random and balanced modes.
             class_names: Optional class name mapping (uses self.class_names if None)
 
         Returns:
@@ -757,6 +939,17 @@ class DatasetSynthesizer:
         if class_names is None:
             class_names = self.class_names
 
+        if self.balanced_sampling:
+            # Balanced sampling mode: generate dataset with controlled class distribution
+            return self._synthesize_dataset_balanced(num_images, class_names)
+        else:
+            # Original random sampling mode
+            return self._synthesize_dataset_random(num_images, class_names)
+
+    def _synthesize_dataset_random(
+        self, num_images: int, class_names: dict[int, str]
+    ) -> dict[str, int]:
+        """Original random sampling dataset generation."""
         logger.info(f"Synthesizing {num_images} images with split mode: {self.split_mode}")
 
         if self.split_mode == "trainval":
@@ -786,6 +979,116 @@ class DatasetSynthesizer:
             for i in tqdm(range(num_val), desc="Synthesizing val", unit="img"):
                 background = random.choice(self.background_images)
                 synthesized, placed_objects = self._synthesize_single_image(background)
+                annotations = self._generate_yolo_annotations(placed_objects)
+
+                img_path = self.output_dir / "images" / "val" / f"val_{i:06d}.jpg"
+                label_path = self.output_dir / "labels" / "val" / f"val_{i:06d}.txt"
+
+                cv2.imwrite(str(img_path), synthesized)
+                with open(label_path, "w", encoding="utf-8") as f:
+                    f.write("\n".join(annotations))
+
+        self._create_data_yaml(class_names)
+        logger.info(f"Dataset synthesis complete! Output: {self.output_dir}")
+
+        return {
+            "train_count": num_train,
+            "val_count": num_val,
+            "output_dir": str(self.output_dir),
+        }
+
+    def _synthesize_dataset_balanced(
+        self, num_images: int, class_names: dict[int, str]
+    ) -> dict[str, int]:
+        """
+        Balanced sampling dataset generation.
+
+        Distributes total object slots (num_images * objects_per_image) evenly across classes.
+        Each image contains objects_per_image different classes.
+        """
+        if num_images <= 0:
+            raise ValueError("num_images must be positive when balanced_sampling=True")
+
+        num_classes = len(self.targets_by_class)
+        objects_per_img = self.min_objects_per_image  # Fixed number in balanced mode
+
+        if objects_per_img > num_classes:
+            raise ValueError(
+                f"objects_per_image ({objects_per_img}) cannot exceed number of classes ({num_classes})"
+            )
+
+        total_object_slots = num_images * objects_per_img
+        if total_object_slots < num_classes:
+            logger.warning(
+                "Requested balanced dataset does not have enough object slots to cover every class. "
+                "Some classes may not appear."
+            )
+
+        avg_instances = total_object_slots / num_classes if num_classes else 0
+
+        logger.info(f"Balanced sampling: {num_images} images, {num_classes} classes")
+        logger.info(f"Each class will appear ~{avg_instances:.2f} times")
+        logger.info(f"Each image will contain {objects_per_img} different classes")
+
+        # Create sampling plan: list of class_id lists for each image
+        class_ids = list(self.targets_by_class.keys())
+        sampling_plan: list[list[int]] = []
+        class_usage_count = dict.fromkeys(class_ids, 0)
+
+        # Build sampling plan to ensure balanced distribution
+        for _ in range(num_images):
+            # Sort classes by usage count (ascending) to prioritize underused classes
+            available_classes = sorted(class_ids, key=lambda cid: class_usage_count[cid])
+            # Select the least-used classes
+            selected = available_classes[:objects_per_img]
+            sampling_plan.append(selected)
+            for cid in selected:
+                class_usage_count[cid] += 1
+
+        # Shuffle the sampling plan for randomness
+        random.shuffle(sampling_plan)
+
+        logger.info(f"Sampling plan created: {len(sampling_plan)} images")
+        for cid, count in class_usage_count.items():
+            cname = class_names.get(cid, f"class_{cid}")
+            logger.info(f"  Class {cid} ({cname}): {count} instances")
+
+        # Split into train/val
+        if self.split_mode == "trainval":
+            num_train = int(len(sampling_plan) * self.train_ratio)
+            num_val = len(sampling_plan) - num_train
+            train_plan = sampling_plan[:num_train]
+            val_plan = sampling_plan[num_train:]
+            logger.info(f"Train: {num_train}, Val: {num_val}")
+        else:
+            train_plan = sampling_plan
+            val_plan = []
+            num_train = len(train_plan)
+            num_val = 0
+            logger.info(f"Train only: {num_train}")
+
+        # Generate training set
+        for i, class_list in enumerate(tqdm(train_plan, desc="Synthesizing train", unit="img")):
+            background = random.choice(self.background_images)
+            synthesized, placed_objects = self._synthesize_single_image_balanced(
+                background, class_list
+            )
+            annotations = self._generate_yolo_annotations(placed_objects)
+
+            img_path = self.output_dir / "images" / "train" / f"train_{i:06d}.jpg"
+            label_path = self.output_dir / "labels" / "train" / f"train_{i:06d}.txt"
+
+            cv2.imwrite(str(img_path), synthesized)
+            with open(label_path, "w", encoding="utf-8") as f:
+                f.write("\n".join(annotations))
+
+        # Generate validation set
+        if self.split_mode == "trainval" and val_plan:
+            for i, class_list in enumerate(tqdm(val_plan, desc="Synthesizing val", unit="img")):
+                background = random.choice(self.background_images)
+                synthesized, placed_objects = self._synthesize_single_image_balanced(
+                    background, class_list
+                )
                 annotations = self._generate_yolo_annotations(placed_objects)
 
                 img_path = self.output_dir / "images" / "val" / f"val_{i:06d}.jpg"

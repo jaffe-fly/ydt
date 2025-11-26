@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "yolodt"
-version = "0.3.0"
+version = "0.4.0"
 description = "YOLO Dataset Tools - Comprehensive toolkit for YOLO format dataset processing"
 readme = "README.md"
 requires-python = ">=3.10"
