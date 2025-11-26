@@ -13,7 +13,12 @@ Modules:
     - cli: Command-line interface
 """
 
-__version__ = "0.4.0"
+try:
+    from importlib.metadata import version
+
+    __version__ = version("yolodt")
+except Exception:
+    __version__ = "unknown"
 
 # Import main classes and functions for easy access
 from .auto_label import auto_label_dataset

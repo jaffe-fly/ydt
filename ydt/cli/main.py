@@ -10,7 +10,8 @@ import sys
 
 os.environ.setdefault("NO_ALBUMENTATIONS_UPDATE", "1")
 
-__version__ = "0.4.0"
+# Import version from package
+from ydt import __version__
 
 
 def create_parser():
