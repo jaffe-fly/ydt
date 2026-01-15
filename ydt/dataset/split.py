@@ -111,9 +111,17 @@ def split_dataset(
     logger.info(f"Found {len(image_files)} images")
 
     # Collect class and rotation information
-    class_samples: dict[int, list[str]] = {}
-    rotation_samples: dict[int, list[str]] = {}
+    #
+    # NOTE:
+    # - Unlabeled images (no txt file OR empty/invalid txt) do NOT participate in splitting
+    #   and are always kept in train.
+    # - Validation selection is based on per-class INSTANCE ratio (not image count).
+    class_instance_counts: dict[int, int] = {}
+    image_class_counts: dict[str, dict[int, int]] = {}
     image_classes: dict[str, set[int]] = {}
+    labeled_images: list[str] = []
+    unlabeled_images: list[str] = []
+    rotation_samples: dict[int, list[str]] = {}
     image_rotation: dict[str, int] = {}
 
     rotation_pattern = re.compile(r"rot_(\d+)")
@@ -128,95 +136,109 @@ def split_dataset(
             rotation_angle = int(rotation_match.group(1)) if rotation_match else 0
             image_rotation[img_file] = rotation_angle
 
+        # Read labels to get per-image per-class instance counts
+        if not label_path.exists():
+            unlabeled_images.append(img_file)
+            continue
+
+        per_image_counts: dict[int, int] = {}
+        with open(label_path, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    class_id = int(float(line.split()[0]))
+                except (ValueError, IndexError):
+                    logger.warning(f"Invalid label in {label_file}: {line}")
+                    continue
+
+                per_image_counts[class_id] = per_image_counts.get(class_id, 0) + 1
+                class_instance_counts[class_id] = class_instance_counts.get(class_id, 0) + 1
+
+        # Empty/invalid label file is treated as unlabeled background
+        if not per_image_counts:
+            unlabeled_images.append(img_file)
+            continue
+
+        image_class_counts[img_file] = per_image_counts
+        image_classes[img_file] = set(per_image_counts.keys())
+        labeled_images.append(img_file)
+
+        if balance_rotation:
+            rotation_angle = image_rotation[img_file]
             if rotation_angle not in rotation_samples:
                 rotation_samples[rotation_angle] = []
             rotation_samples[rotation_angle].append(img_file)
 
-        # Read labels to get classes
-        if label_path.exists():
-            image_classes[img_file] = set()
-            with open(label_path, encoding="utf-8") as f:
-                for line in f:
-                    line = line.strip()
-                    if not line:
-                        continue
-                    try:
-                        class_id = int(float(line.split()[0]))
-                        image_classes[img_file].add(class_id)
+    logger.info(
+        f"Labeled images: {len(labeled_images)}; Unlabeled/empty-label images kept in train: {len(unlabeled_images)}"
+    )
 
-                        if class_id not in class_samples:
-                            class_samples[class_id] = []
-                        class_samples[class_id].append(img_file)
-                    except (ValueError, IndexError):
-                        logger.warning(f"Invalid label in {label_file}: {line}")
-                        continue
+    val_ratio = 1 - train_ratio
+    class_target_instances: dict[int, int] = {}
+    for class_id, total_instances in class_instance_counts.items():
+        target = int(round(total_instances * val_ratio))
+        if balance_classes and total_instances > 0 and val_ratio > 0:
+            target = max(1, target)
+        class_target_instances[class_id] = min(target, total_instances)
 
-    # Calculate validation set size
-    total_val_count = int(len(image_files) * (1 - train_ratio))
-    logger.info(f"Target validation set size: {total_val_count}")
+    logger.info("Target validation instance counts by class:")
+    for class_id in sorted(class_target_instances.keys()):
+        logger.info(
+            f"  Class {class_id}: {class_target_instances[class_id]}/{class_instance_counts[class_id]}"
+        )
 
     # Define scoring function for balanced split
-    def get_image_score(img: str) -> tuple:
-        class_count = len(image_classes.get(img, set()))
+    def get_image_score(
+        img: str, remaining: dict[int, int], val_angles: set[int]
+    ) -> tuple[int, int, int, int]:
+        counts = image_class_counts.get(img, {})
+        gain = sum(min(cnt, remaining.get(class_id, 0)) for class_id, cnt in counts.items())
+        overflow = sum(max(0, cnt - remaining.get(class_id, 0)) for class_id, cnt in counts.items())
+        total_instances = sum(counts.values())
+        rotation_bonus = 0
         if balance_rotation:
-            rotation_count = len(
-                [x for x in rotation_samples.get(image_rotation[img], []) if x != img]
-            )
-            return (class_count, rotation_count)
-        return (class_count,)
-
-    # Sort images by score (prefer images with fewer classes)
-    sorted_images = sorted(image_files, key=get_image_score)
+            rotation_bonus = 1 if image_rotation.get(img, 0) not in val_angles else 0
+        # Higher gain/rotation_bonus is better; lower overflow/total_instances is better
+        return (gain, rotation_bonus, -overflow, -total_instances)
 
     # Initialize validation set
     val_images: set[str] = set()
-    class_val_samples = {class_id: set() for class_id in class_samples.keys()}
+    val_instance_counts = dict.fromkeys(class_instance_counts.keys(), 0)
+    remaining_needed = class_target_instances.copy()
+    val_angles: set[int] = set()
 
-    if balance_rotation:
-        rotation_val_samples = {angle: set() for angle in rotation_samples.keys()}
+    if val_ratio > 0 and labeled_images and any(v > 0 for v in remaining_needed.values()):
+        # Greedy selection: pick images that best satisfy remaining per-class instance targets
+        candidate_images = labeled_images.copy()
+        random.shuffle(candidate_images)
 
-    # Phase 1: Ensure each class and rotation angle has at least one sample
-    if balance_classes:
-        for img in sorted_images:
-            if len(val_images) >= total_val_count:
+        while any(v > 0 for v in remaining_needed.values()):
+            best_img: str | None = None
+            best_score: tuple[int, int, int, int] = (0, 0, 0, 0)
+
+            for img in candidate_images:
+                if img in val_images:
+                    continue
+                score = get_image_score(img, remaining_needed, val_angles)
+                if score > best_score:
+                    best_score = score
+                    best_img = img
+
+            # No further progress possible
+            if best_img is None or best_score[0] <= 0:
                 break
 
-            img_classes = image_classes.get(img, set())
-            needs_sample = False
-
-            # Check if any class lacks validation samples
-            for class_id in img_classes:
-                if not class_val_samples[class_id]:
-                    needs_sample = True
-                    break
-
-            # Check rotation balance if enabled
-            if balance_rotation and not needs_sample:
-                rotation_angle = image_rotation[img]
-                if not rotation_val_samples[rotation_angle]:
-                    needs_sample = True
-
-            if needs_sample:
-                val_images.add(img)
-                for class_id in img_classes:
-                    class_val_samples[class_id].add(img)
-                if balance_rotation:
-                    rotation_val_samples[image_rotation[img]].add(img)
-
-    # Phase 2: Fill remaining validation set slots
-    remaining_images = sorted_images.copy()
-    random.shuffle(remaining_images)
-
-    for img in remaining_images:
-        if len(val_images) >= total_val_count:
-            break
-        if img not in val_images:
-            val_images.add(img)
-            img_classes = image_classes.get(img, set())
-            for class_id in img_classes:
-                class_val_samples[class_id].add(img)
+            val_images.add(best_img)
             if balance_rotation:
-                rotation_val_samples[image_rotation[img]].add(img)
+                val_angles.add(image_rotation.get(best_img, 0))
+
+            for class_id, cnt in image_class_counts[best_img].items():
+                if class_id in val_instance_counts:
+                    val_instance_counts[class_id] += cnt
+                if class_id in remaining_needed:
+                    remaining_needed[class_id] = max(0, remaining_needed[class_id] - cnt)
 
     # Copy files to output directories
     train_count = 0
@@ -251,20 +273,25 @@ def split_dataset(
     logger.info("Dataset split complete!")
     logger.info(f"Training set: {train_count} images, Validation set: {val_count} images")
 
-    # Log class distribution
-    logger.info("\nClass distribution:")
-    for class_id in sorted(class_val_samples.keys()):
-        val_count_cls = len(class_val_samples[class_id])
-        total_count = len(class_samples[class_id])
-        ratio = val_count_cls / total_count if total_count > 0 else 0
-        logger.info(f"  Class {class_id}: {val_count_cls}/{total_count} ({ratio:.1%})")
+    # Log class distribution (instance-based)
+    logger.info("\nClass distribution (instances):")
+    for class_id in sorted(class_instance_counts.keys()):
+        val_inst = val_instance_counts.get(class_id, 0)
+        total_inst = class_instance_counts[class_id]
+        ratio = val_inst / total_inst if total_inst > 0 else 0
+        logger.info(f"  Class {class_id}: {val_inst}/{total_inst} ({ratio:.1%})")
 
-    # Log rotation distribution if enabled
-    if balance_rotation:
-        logger.info("\nRotation angle distribution:")
-        for angle in sorted(rotation_val_samples.keys()):
-            val_count_rot = len(rotation_val_samples[angle])
-            total_count = len(rotation_samples[angle])
+    # Log rotation distribution if enabled (image-based)
+    if balance_rotation and rotation_samples:
+        logger.info("\nRotation angle distribution (val images):")
+        rotation_val_counts: dict[int, int] = dict.fromkeys(rotation_samples.keys(), 0)
+        for img in val_images:
+            angle = image_rotation.get(img, 0)
+            if angle in rotation_val_counts:
+                rotation_val_counts[angle] += 1
+        for angle in sorted(rotation_val_counts.keys()):
+            total_count = len(rotation_samples.get(angle, []))
+            val_count_rot = rotation_val_counts[angle]
             ratio = val_count_rot / total_count if total_count > 0 else 0
             logger.info(f"  {angle}°: {val_count_rot}/{total_count} ({ratio:.1%})")
 
